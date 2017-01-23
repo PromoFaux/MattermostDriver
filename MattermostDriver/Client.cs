@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using WebSocket4Net;
 
 namespace MattermostDriver
@@ -12,40 +13,13 @@ namespace MattermostDriver
 		private bool awaiting_ok;
 
 		#region Events
-		/// <summary>
-		/// Thrown when the websocket is successfully connected.
-		/// </summary>
 		public event EventHandler WebsocketConnected;
-		/// <summary>
-		/// Thrown when a Hello websocket event is received.
-		/// </summary>
 		public event HelloEventHandler Hello;
-		/// <summary>
-		/// Thrown when a Status Change websocket event is received.
-		/// </summary>
 		public event StatusChangeEventHandler StatusChange;
-		/// <summary>
-		/// Thrown when a Typing websocket event is received.
-		/// </summary>
 		public event TypingEventHandler Typing;
-		/// <summary>
-		/// Thrown when a Posted websocket event is received.
-		/// </summary>
 		public event PostedEventHandler Posted;
-		/// <summary>
-		/// Thrown when a New User websocket event is received.
-		/// </summary>
 		public event NewUserEventHandler NewUser;
 		#endregion
-
-		/// <summary>
-		/// Authenticates and connects to the server's websocket.
-		/// </summary>
-		/// <param name="url">The base URL of the Mattermost server.</param>
-		/// <param name="username">The login ID (email/username/AD/LDAP ID).</param>
-		/// <param name="password">The account password.</param>
-		/// <param name="logger">An implementation of the ILogger interface.</param>
-		/// <returns></returns>
 		public Self Connect(string url, string username, string password, ILogger logger)
 		{
 			//Setup logging
@@ -177,17 +151,7 @@ namespace MattermostDriver
 		#endregion
 
 		#region User Methods
-		/// <summary>
-		/// Creates a new user.
-		/// </summary>
-		/// <param name="email">Required - The new user's email address.</param>
-		/// <param name="username">Required - The new user's username.</param>
-		/// <param name="password">Required - The new user's password.</param>
-		/// <param name="first_name">Optional - The new user's first name.</param>
-		/// <param name="last_name">Optional - The new user's last name.</param>
-		/// <param name="nickname">Optional - The new user's nickname.</param>
-		/// <param name="locale">Optional - The new user's locale.</param>
-		/// <returns></returns>
+		[ApiRoute("/users/create", RequestType.POST)]
 		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
 		{
 			var createUserRequest = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
@@ -197,6 +161,184 @@ namespace MattermostDriver
 			else
 				return null;
 		}
+
+		[ApiRoute("/users/me", RequestType.GET)]
+		public Self Me()
+		{
+			string rawdata = API.Get($"/users/me");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Self>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/login", RequestType.POST)]
+		public Self Login(string login_id, string password, string token = "", string device_id = "")
+		{
+			var loginRequest = new { login_id = login_id, password = password, token = token, device_id = device_id };
+			string rawdata = API.Post($"/users/login", loginRequest);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Self>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/logout", RequestType.POST)]
+		public void Logout()
+		{
+			API.Post($"/users/logout", null);
+		}
+
+		[ApiRoute("/users/{offset}/{limit}", RequestType.GET)]
+		public Dictionary<string, User> GetUsers(int offset, int limit)
+		{
+			string rawdata = API.Get($"/users/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/users/{offset}/{limit}", RequestType.GET)]
+		public Dictionary<string, User> GetUsersInTeam(string team_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/users/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/search", RequestType.POST)]
+		public List<User> SearchUsers(string term, string team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false)
+		{
+			var searchUserRequest = new { term = term, team_id = team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive };
+			string rawdata = API.Post($"/users/search", searchUserRequest);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/name/{username}", RequestType.GET)]
+		public User GetUserByUsername(string username)
+		{
+			string rawdata = API.Get($"/users/name/{username}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<User>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/email/{email}", RequestType.GET)]
+		public User GetUserByEmail(string email)
+		{
+			string rawdata = API.Get($"/users/email/{email}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<User>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/ids", RequestType.POST)]
+		public Dictionary<string,User> GetUsersByIDs(List<string> ids)
+		{
+			string rawdata = API.Post($"/users/ids", ids);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/users/{offset}/{limit}", RequestType.GET)]
+		public Dictionary<string,User> GetUsersInChannel(string team_id, string channel_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/users/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/users/not_in_channel/{offset}/{limit}", RequestType.GET)]
+		public Dictionary<string, User> GetUsersNotInChannel(string team_id, string channel_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/users/not_in_channel/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/update", RequestType.POST)]
+		public User UpdateUser(User user)
+		{
+			string rawdata = API.Post($"/users/update", user);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<User>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/update_roles", RequestType.POST)]
+		public void UpdateUserRoles(string user_id, string new_roles, string team_id = "")
+		{
+			if (!string.IsNullOrWhiteSpace(team_id))
+			{
+				var request = new { user_id = user_id, team_id = team_id, new_roles = new_roles };
+				API.Post($"/users/update_roles", request);
+			}
+			else
+			{
+				var request = new { user_id = user_id, new_roles = new_roles };
+				API.Post($"/users/{user_id}/update_roles", request);
+			}
+		}
+
+		[ApiRoute("/users/update_active", RequestType.POST)]
+		public User UpdateActive(string user_id, bool active)
+		{
+			var request = new { user_id = user_id, active = active };
+			string rawdata = API.Post($"/users/update_active", request);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<User>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/users/update_notify", RequestType.POST)]
+		//public void UpdateNotify(string user_id, string email, string desktop_sound, string desktop, string comments, string desktop_duration = "", string first_name = "", string mention_keys = "", string push = "", string push_status = "")
+		public void UpdateNotify(string user_id, string comments, string desktop, string desktop_sound, string email, string channel = "", string desktop_duration = "", string first_name = "", string mention_keys = "", string push = "", string push_status = "")
+		{
+			var obj = new { user_id = user_id, comments = comments, desktop = desktop, desktop_sound = desktop_sound, email = email, channel = channel, desktop_duration = desktop_duration, first_name = first_name, mention_keys = mention_keys, push = push, push_status = push_status };
+			API.Post($"/users/update_notify", obj);
+		}
+
+		/*
+		 * TODO:
+		[ApiRoute("/users/newpassword", RequestType.POST)]
+		[ApiRoute("/users/send_password_reset", RequestType.POST)]
+		[ApiRoute("/users/reset_password", RequestType.POST)]
+		[ApiRoute("/users/revoke_session", RequestType.POST)]
+		[ApiRoute("/users/attach_device", RequestType.POST)]
+		[ApiRoute("/users/verify_email", RequestType.POST)]
+		[ApiRoute("/users/resend_verification", RequestType.POST)]
+		[ApiRoute("/users/newimage", RequestType.POST)]
+		[ApiRoute("/users/autocomplete", RequestType.GET)]
+		[ApiRoute("/teams/{team_id}/users/autocomplete", RequestType.GET)]
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/users/autocomplete", RequestType.GET)]
+		[ApiRoute("/users/mfa", RequestType.POST)]
+		[ApiRoute("/users/generate_mfa_secret", RequestType.POST)]
+		[ApiRoute("/users/update_mfa", RequestType.POST)]
+		[ApiRoute("/users/claim/email_to_oauth", RequestType.POST)]
+		[ApiRoute("/users/claim/oauth_to_email", RequestType.POST)]
+		[ApiRoute("/users/claim/email_to_ldap", RequestType.POST)]
+		[ApiRoute("/users/claim/ldap_to_email", RequestType.POST)]
+		[ApiRoute("/users/{user_id}/get", RequestType.GET)]
+		[ApiRoute("/users/{user_id}/sessions", RequestType.GET)]
+		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
+		[ApiRoute("/users/{user_id}/image", RequestType.GET)]
+		*/
 		#endregion
 	}
 }

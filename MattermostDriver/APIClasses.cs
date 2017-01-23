@@ -12,12 +12,15 @@ namespace MattermostDriver
 		public class UserNotifProps
 		{
 			public string channel;
+			public string comments;
 			public string desktop;
+			public string desktop_duration;
 			public string desktop_sound;
 			public string email;
 			public string first_name;
 			public string mention_keys;
 			public string push;
+			public string push_status;
 		}
 	}
 

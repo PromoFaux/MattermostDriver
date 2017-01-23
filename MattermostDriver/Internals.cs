@@ -1,4 +1,6 @@
-﻿namespace MattermostDriver
+﻿using System;
+
+namespace MattermostDriver
 {
 	//Event Handler Delegates
 	public delegate void EventHandler();
@@ -7,6 +9,25 @@
 	public delegate void TypingEventHandler(TypingEvent e);
 	public delegate void PostedEventHandler(PostedEvent e);
 	public delegate void NewUserEventHandler(NewUserEvent e);
+
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+	public class ApiRoute : Attribute
+	{
+		string route;
+		RequestType requestType;
+
+		public ApiRoute(string route, RequestType requestType)
+		{
+			this.route = route;
+			this.requestType = requestType;
+		}
+	}
+
+	public enum RequestType
+	{
+		POST,
+		GET
+	}
 
 	internal class AppError
 	{

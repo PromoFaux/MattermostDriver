@@ -54,7 +54,8 @@ namespace MattermostDriver
 			RestRequest request = new RestRequest(endpoint, Method.POST);
 			request.AddHeader("Content-Type", "application/json");
 			request.AddHeader("Authorization", "Bearer " + token);
-			request.AddJsonBody(jsonbody);
+			if (jsonbody != null)
+				request.AddJsonBody(jsonbody);
 			var result = client.Execute(request);
 
 			Client.logger.Debug($"Executed API.Post at endpoint '{endpoint}'.");
@@ -68,10 +69,40 @@ namespace MattermostDriver
 					return "";
 				}
 			}
-			catch
-			{
+			catch { }
 
+			Client.logger.Debug($"Result: " + result.Content);
+
+			return result.Content;
+		}
+
+		internal static string Get(string endpoint)
+		{
+			//Make sure client is logged in.
+			if (string.IsNullOrWhiteSpace(token))
+			{
+				Client.logger.Error($"API.Get called at endpoint '{endpoint}', but not logged in.");
+				return "";
 			}
+
+			RestRequest request = new RestRequest(endpoint, Method.GET);
+			request.AddHeader("Authorization", "Bearer " + token);
+			var result = client.Execute(request);
+
+			Client.logger.Debug($"Executed API.Get at endpoint '{endpoint}'.");
+
+			try
+			{
+				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
+				if (error.id != null && error.status_code != null)
+				{
+					Client.logger.Error("Error received from API: " + error.ToString());
+					return "";
+				}
+			}
+			catch { }
+
+			Client.logger.Debug($"Result: " + result.Content);
 
 			return result.Content;
 		}
