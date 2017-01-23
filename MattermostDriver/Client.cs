@@ -11,11 +11,41 @@ namespace MattermostDriver
 		private int seq;
 		private bool awaiting_ok;
 
-		//Events
+		#region Events
+		/// <summary>
+		/// Thrown when the websocket is successfully connected.
+		/// </summary>
 		public event EventHandler WebsocketConnected;
+		/// <summary>
+		/// Thrown when a Hello websocket event is received.
+		/// </summary>
 		public event HelloEventHandler Hello;
+		/// <summary>
+		/// Thrown when a Status Change websocket event is received.
+		/// </summary>
 		public event StatusChangeEventHandler StatusChange;
+		/// <summary>
+		/// Thrown when a Typing websocket event is received.
+		/// </summary>
+		public event TypingEventHandler Typing;
+		/// <summary>
+		/// Thrown when a Posted websocket event is received.
+		/// </summary>
+		public event PostedEventHandler Posted;
+		/// <summary>
+		/// Thrown when a New User websocket event is received.
+		/// </summary>
+		public event NewUserEventHandler NewUser;
+		#endregion
 
+		/// <summary>
+		/// Authenticates and connects to the server's websocket.
+		/// </summary>
+		/// <param name="url">The base URL of the Mattermost server.</param>
+		/// <param name="username">The login ID (email/username/AD/LDAP ID).</param>
+		/// <param name="password">The account password.</param>
+		/// <param name="logger">An implementation of the ILogger interface.</param>
+		/// <returns></returns>
 		public Self Connect(string url, string username, string password, ILogger logger)
 		{
 			//Setup logging
@@ -44,7 +74,7 @@ namespace MattermostDriver
 			API.Initialize();
 
 			//Login and receive Session Token
-			string rawdata = API.PostGetAuth(new AuthorizationRequest(username, password));
+			string rawdata = API.PostGetAuth(new { login_id = username, password = password });
 
 			//Connect to Websocket
 			socket = new WebSocket(websocket);
@@ -61,13 +91,14 @@ namespace MattermostDriver
 				return null;
 		}
 
+		#region Websocket Handlers
 		private void OnWebsocketOpen(object sender, EventArgs e)
 		{
 			WebsocketConnected?.Invoke();
-			logger.Debug("Websocket Open event thrown. Sending Authentication Challenge.");
+			logger.Debug("Websocket-open event thrown. Sending authentication challenge.");
 
 			//Authenticate over Websocket
-			AuthChallengeRequest request = new AuthChallengeRequest(seq, API.token);
+			var request = new { seq = seq, action = "authentication_challenge", data = new { token = API.token } };
 			awaiting_ok = true;
 			socket.Send(JsonConvert.SerializeObject(request));
 		}
@@ -79,11 +110,12 @@ namespace MattermostDriver
 			//Specially handle Auth 'OK' message
 			if (awaiting_ok)
 			{
-				AuthResponse resp = JsonConvert.DeserializeObject<AuthResponse>(rawdata);
-				if (resp.status != "OK")
+				var res = JsonConvert.DeserializeAnonymousType(rawdata, new { status = "", seq_reply = "" });
+
+				if (res.status != "OK")
 					logger.Warn("OK not received via websocket. Full message: " + rawdata);
 				else
-					logger.Debug("Authentication Challenge successful. Awaiting hello event.");
+					logger.Debug("Authentication challenge successful. Awaiting hello event.");
 				awaiting_ok = false;
 				return;
 			}
@@ -97,10 +129,39 @@ namespace MattermostDriver
 					logger.Debug("Hello event received.");
 					Hello?.Invoke(JsonConvert.DeserializeObject<HelloEvent>(rawdata));
 					break;
+				case "new_user":
+					NewUserEvent nuevent = JsonConvert.DeserializeObject<NewUserEvent>(rawdata);
+					logger.Debug("New user event received: " + nuevent.ToString());
+					NewUser?.Invoke(nuevent);
+					break;
+				case "posted":
+					PrePostedEvent ppevent = JsonConvert.DeserializeObject<PrePostedEvent>(rawdata);
+					PostedEvent pevent = new PostedEvent()
+					{
+						broadcast = ppevent.broadcast,
+						@event = ppevent.@event,
+						data = new PostedEvent.Data()
+						{
+							channel_display_name = ppevent.data.channel_display_name,
+							channel_name = ppevent.data.channel_name,
+							channel_type = ppevent.data.channel_type,
+							sender_name = ppevent.data.sender_name,
+							team_id = ppevent.data.team_id,
+							post = JsonConvert.DeserializeObject<Post>(ppevent.data.post)
+						}
+					};
+					logger.Debug("Posted event received: " + pevent.ToString());
+					Posted?.Invoke(pevent);
+					break;
 				case "status_change":
 					StatusChangeEvent scevent = JsonConvert.DeserializeObject<StatusChangeEvent>(rawdata);
 					logger.Debug("Status change event received: " + scevent.ToString());
 					StatusChange?.Invoke(scevent);
+					break;
+				case "typing":
+					TypingEvent tevent = JsonConvert.DeserializeObject<TypingEvent>(rawdata);
+					logger.Debug($"Typing event received: " + tevent.ToString());
+					Typing?.Invoke(tevent);
 					break;
 				default:
 					logger.Warn("Unhandled event type received: " + rawdata);
@@ -113,5 +174,29 @@ namespace MattermostDriver
 		{
 			logger.Warn("Websocket closed.");
 		}
+		#endregion
+
+		#region User Methods
+		/// <summary>
+		/// Creates a new user.
+		/// </summary>
+		/// <param name="email">Required - The new user's email address.</param>
+		/// <param name="username">Required - The new user's username.</param>
+		/// <param name="password">Required - The new user's password.</param>
+		/// <param name="first_name">Optional - The new user's first name.</param>
+		/// <param name="last_name">Optional - The new user's last name.</param>
+		/// <param name="nickname">Optional - The new user's nickname.</param>
+		/// <param name="locale">Optional - The new user's locale.</param>
+		/// <returns></returns>
+		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
+		{
+			var createUserRequest = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
+			string rawdata = API.Post($"/users/create", createUserRequest);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<User>(rawdata);
+			else
+				return null;
+		}
+		#endregion
 	}
 }
