@@ -7,12 +7,4 @@
 		void Warn(string message);
 		void Error(string message);
 	}
-
-	public enum LogLevel
-	{
-		Debug,
-		Info,
-		Warn,
-		Error
-	}
 }

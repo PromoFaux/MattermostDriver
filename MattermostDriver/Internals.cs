@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MattermostDriver
+﻿namespace MattermostDriver
 {
+	//Event Handler Delegates
+	public delegate void EventHandler();
+	public delegate void HelloEventHandler(HelloEvent e);
+	public delegate void StatusChangeEventHandler(StatusChangeEvent e);
+
 	internal class AuthorizationRequest
 	{
 		public string login_id;
@@ -30,5 +29,34 @@ namespace MattermostDriver
 		{
 			return $"ID: {id} | message: {message} | detailed_error: {detailed_error} | request_id: {request_id} | status_code: {status_code}";
 		}
+	}
+
+	internal class AuthChallengeRequest
+	{
+		public int seq;
+		public string action;
+		public Data data;
+
+		public AuthChallengeRequest(int s, string t)
+		{
+			seq = s;
+			action = "authentication_challenge";
+			data = new Data(t);
+		}
+
+		internal class Data
+		{
+			public string token;
+			public Data(string t)
+			{
+				token = t;
+			}
+		}
+	}
+
+	internal class AuthResponse
+	{
+		public string status;
+		public string seq_reply;
 	}
 }
