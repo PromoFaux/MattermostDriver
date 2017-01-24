@@ -223,4 +223,18 @@ namespace MattermostDriver
 		public string channel_id;
 		public int member_count;
 	}
+
+	public class SearchResult
+	{
+		public List<string> order;
+		public Dictionary<string, Post> posts;
+	}
+
+	public class Reaction
+	{
+		public string user_id;
+		public string post_id;
+		public string emoji_name;
+		public long create_at;
+	}
 }

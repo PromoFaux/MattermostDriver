@@ -27,6 +27,10 @@ namespace MattermostDriver
 		public event EphemeralMessageEventHandler EphemeralMessage;
 		public event PreferenceChangedEventHandler PreferenceChanged;
 		public event UserRemovedEventHandler UserRemoved;
+		public event PostDeletedEventHandler PostDeleted;
+		public event PostEditedEventHandler PostEdited;
+		public event ReactionChangedEventHandler ReactionAdded;
+		public event ReactionChangedEventHandler ReactionRemoved;
 		#endregion
 
 		public Self Connect(string url, string username, string password, ILogger logger)
@@ -137,6 +141,20 @@ namespace MattermostDriver
 					logger.Debug("New user event received: " + nuevent.ToString());
 					NewUser?.Invoke(nuevent);
 					break;
+				case "post_deleted":
+					PrePostDeletedEvent ppdevent = JsonConvert.DeserializeObject<PrePostDeletedEvent>(rawdata);
+					PostDeletedEvent pdevent = new PostDeletedEvent();
+					pdevent.Import(ppdevent);
+					logger.Debug("Post deleted event received: " + pdevent.ToString());
+					PostDeleted?.Invoke(pdevent);
+					break;
+				case "post_edited":
+					PrePostEditedEvent ppeevent = JsonConvert.DeserializeObject<PrePostEditedEvent>(rawdata);
+					PostEditedEvent peevent = new PostEditedEvent();
+					peevent.Import(ppeevent);
+					logger.Debug("Post edited event received: " + peevent.ToString());
+					PostEdited?.Invoke(peevent);
+					break;
 				case "posted":
 					PrePostedEvent ppevent = JsonConvert.DeserializeObject<PrePostedEvent>(rawdata);
 					PostedEvent pevent = new PostedEvent();
@@ -150,6 +168,20 @@ namespace MattermostDriver
 					pcevent.Import(ppcevent);
 					logger.Debug("Preference changed event received: " + pcevent.ToString());
 					PreferenceChanged?.Invoke(pcevent);
+					break;
+				case "reaction_added":
+					PreReactionChangedEvent praevent = JsonConvert.DeserializeObject<PreReactionChangedEvent>(rawdata);
+					ReactionChangedEvent raevent = new ReactionChangedEvent();
+					raevent.Import(praevent);
+					logger.Debug("Reaction added event received: " + raevent.ToString());
+					ReactionAdded?.Invoke(raevent);
+					break;
+				case "reaction_removed":
+					PreReactionChangedEvent prrevent = JsonConvert.DeserializeObject<PreReactionChangedEvent>(rawdata);
+					ReactionChangedEvent rrevent = new ReactionChangedEvent();
+					rrevent.Import(prrevent);
+					logger.Debug("Reaction removed event received: " + rrevent.ToString());
+					ReactionRemoved?.Invoke(rrevent);
 					break;
 				case "status_change":
 					StatusChangeEvent scevent = JsonConvert.DeserializeObject<StatusChangeEvent>(rawdata);
@@ -770,6 +802,136 @@ namespace MattermostDriver
 		{
 			var obj = new { user_id = user_id };
 			API.Post($"/teams/{team_id}/channels/{channel_id}/remove", obj);
+		}
+		#endregion
+
+		#region Post Methods
+
+		[ApiRoute("/teams/{team_id}/posts/search", RequestType.POST)]
+		public SearchResult SearchPosts(string team_id, string terms, bool is_or_search)
+		{
+			var obj = new { terms = terms, is_or_search = is_or_search };
+			string rawdata = API.Post($"/teams/{team_id}/posts/search", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/posts/flagged/{offset}/{limit}", RequestType.GET)]
+		public SearchResult GetFlaggedPosts(string team_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/posts/flagged/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/create", RequestType.POST)]
+		public Post CreatePost(string team_id, string channel_id, Post newPost)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/posts/create", newPost);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Post>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/update", RequestType.POST)]
+		public Post UpdatePost(string team_id, string channel_id, Post post)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/posts/update", post);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Post>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/page/{offset}/{limit}", RequestType.GET)]
+		public SearchResult GetPosts(string team_id, string channel_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/posts/page/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/since/{time}", RequestType.GET)]
+		public SearchResult GetPostsSince(string team_id, string channel_id, long time)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/posts/since/{time}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/posts/{post_id}", RequestType.GET)]
+		public SearchResult GetPost(string team_id, string post_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/posts/{post_id}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/delete", RequestType.POST)]
+		public void DeletePost(string team_id, string channel_id, string post_id)
+		{
+			API.Post($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/delete", null);
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/before/{offset}/{limit}", RequestType.GET)]
+		public SearchResult GetPostsBeforePost(string team_id, string channel_id, string post_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/before/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/after/{offset}/{limit}", RequestType.GET)]
+		public SearchResult GetPostsAfterPost(string team_id, string channel_id, string post_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/after/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<SearchResult>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions", RequestType.GET)]
+		public List<Reaction> GetPostReactions(string team_id, string channel_id, string post_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Reaction>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions/save", RequestType.POST)]
+		public Reaction CreateReaction(string team_id, string channel_id, string user_id, string post_id, string emoji_name)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions/save", new Reaction() { emoji_name = emoji_name, post_id = post_id, user_id = user_id });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Reaction>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions/delete", RequestType.POST)]
+		public Reaction DeleteReaction(string team_id, string channel_id, string user_id, string post_id, string emoji_name)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/posts/{post_id}/reactions/delete", new Reaction() { emoji_name = emoji_name, post_id = post_id, user_id = user_id });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Reaction>(rawdata);
+			else
+				return null;
 		}
 		#endregion
 	}

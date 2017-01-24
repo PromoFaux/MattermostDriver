@@ -111,7 +111,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Channel Display Name: {data.channel_display_name} | Channel Name: {data.channel_name} | Channel Type: {data.channel_type} | Sender Name: {data.sender_name} | Team ID: {data.team_id}";
+			return $"Post ID: {data.post.id} | Sender Name: {data.sender_name} | Message: {data.post.message}";
 		}
 	}
 
@@ -223,7 +223,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Post ID: {data.post.id} | User ID: {data.post.user_id}";
+			return $"Post ID: {data.post.id} | Message: {data.post.message}";
 		}
 	}
 
@@ -283,6 +283,112 @@ namespace MattermostDriver
 		public override string ToString()
 		{
 			return $"Remover ID: {data.remover_id} | User ID: {data.user_id}";
+		}
+	}
+
+	internal class PrePostDeletedEvent : IResponse
+	{
+		public Data data;
+
+		internal class Data
+		{
+			public string post;
+		}
+	}
+
+	public class PostDeletedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public Post post;
+		}
+
+		internal void Import(PrePostDeletedEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				post = JsonConvert.DeserializeObject<Post>(e.data.post)
+			};
+		}
+
+		public override string ToString()
+		{
+			return $"Post ID: {data.post.id} | Message: {data.post.message}";
+		}
+	}
+
+	internal class PrePostEditedEvent : IResponse
+	{
+		public Data data;
+
+		internal class Data
+		{
+			public string post;
+		}
+	}
+
+	public class PostEditedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public Post post;
+		}
+
+		internal void Import(PrePostEditedEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				post = JsonConvert.DeserializeObject<Post>(e.data.post)
+			};
+		}
+
+		public override string ToString()
+		{
+			return $"Post ID: {data.post.id} | Message: {data.post.message}";
+		}
+	}
+
+	//ReactionAdded - ReactionRemoved
+	internal class PreReactionChangedEvent : IResponse
+	{
+		public Data data;
+
+		internal class Data
+		{
+			public string reaction;
+		}
+	}
+
+	public class ReactionChangedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public Reaction reaction;
+		}
+
+		internal void Import(PreReactionChangedEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				reaction = JsonConvert.DeserializeObject<Reaction>(e.data.reaction)
+			};
+		}
+
+		public override string ToString()
+		{
+			return $"Reaction Name: {data.reaction.emoji_name}";
 		}
 	}
 }
