@@ -19,6 +19,8 @@ namespace MattermostDriver
 		public event TypingEventHandler Typing;
 		public event PostedEventHandler Posted;
 		public event NewUserEventHandler NewUser;
+		public event ChannelDeletedEventHandler ChannelDeleted;
+		public event DirectAddedEventHandler DirectAdded;
 		#endregion
 		public Self Connect(string url, string username, string password, ILogger logger)
 		{
@@ -99,6 +101,16 @@ namespace MattermostDriver
 
 			switch (response.@event)
 			{
+				case "channel_deleted":
+					ChannelDeletedEvent cdevent = JsonConvert.DeserializeObject<ChannelDeletedEvent>(rawdata);
+					logger.Debug("Channel deleted event received: " + cdevent.ToString());
+					ChannelDeleted?.Invoke(cdevent);
+					break;
+				case "direct_added":
+					DirectAddedEvent daevent = JsonConvert.DeserializeObject<DirectAddedEvent>(rawdata);
+					logger.Debug("Direct added event received: " + daevent.ToString());
+					DirectAdded?.Invoke(daevent);
+					break;
 				case "hello":
 					logger.Debug("Hello event received.");
 					Hello?.Invoke(JsonConvert.DeserializeObject<HelloEvent>(rawdata));
@@ -501,6 +513,184 @@ namespace MattermostDriver
 			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
 			API.Post($"/teams/{team_id}/update_member_roles", obj);
 		}
+		#endregion
+
+		#region Channel Methods
+
+		[ApiRoute("/teams/{team_id}/channels/create", RequestType.POST)]
+		public Channel CreateChannel(string team_id, string name, string display_name, string type, string purpose = "", string header = "")
+		{
+			var obj = new { team_id = team_id, name = name, display_name = display_name, type = type, purpose = purpose, header = header };
+			string rawdata = API.Post($"/teams/{team_id}/channels/create", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/update", RequestType.POST)]
+		public Channel UpdateChannel(string team_id, Channel channel)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/update", channel);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/view", RequestType.POST)]
+		public void ViewChannel(string team_id, string channel_id, string prev_channel_id = "")
+		{
+			var obj = new { team_id = team_id, channel_id = channel_id, prev_channel_id = prev_channel_id };
+			API.Post($"/teams/{team_id}/channels/view", obj);
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/", RequestType.GET)]
+		public List<Channel> GetJoinedChannels(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/name/{channel_name}", RequestType.GET)]
+		public Channel GetChannelByName(string team_id, string channel_name)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/name/{channel_name}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/more/{offset}/{limit}", RequestType.GET)]
+		public List<Channel> GetChannelsNotJOined(string team_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/more/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/members", RequestType.GET)]
+		public List<ChannelMember> GetChannelMembers(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/members");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<ChannelMember>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/", RequestType.GET)]
+		public ChannelInfo GetChannelByID(string team_id, string channel_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<ChannelInfo>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/stats", RequestType.GET)]
+		public ChannelStats GetChannelStats(string team_id, string channel_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/stats");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<ChannelStats>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/delete", RequestType.POST)]
+		public void DeleteChannel(string team_id, string channel_id)
+		{
+			API.Post($"/teams/{team_id}/channels/{channel_id}/delete", null);
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/add", RequestType.POST)]
+		public void AddUserToChannel(string team_id, string channel_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			API.Post($"/teams/{team_id}/channels/{channel_id}/add", obj);
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/members/{user_id}", RequestType.GET)]
+		public ChannelMember GetChannelMember(string team_id, string channel_id, string user_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/members/{user_id}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<ChannelMember>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/members/ids", RequestType.POST)]
+		public List<ChannelMember> GetChannelMembers(string team_id, string channel_id, List<string> ids)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/members/ids", ids);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<ChannelMember>>(rawdata);
+			else
+				return null;
+		}
+
+		// -- Doesn't exist in 3.6.1, will return in 3.7
+		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/update_member_roles", RequestType.POST)]
+		//public void UpdateChannelMemberRoles(string team_id, string channel_id, string user_id, string new_roles)
+		//{
+		//	var obj = new { user_id = user_id, new_roles = new_roles };
+		//	API.Post($"/teams/{team_id}/channels/{channel_id}/update_member_roles", obj);
+		//}
+
+		[ApiRoute("/teams/{team_id}/channels/autocomplete", RequestType.GET)]
+		public List<Channel> AutoCompleteChannels(string team_id, string term)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/autocomplete", new Dictionary<string, string>() { { "term", term } });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/more/search", RequestType.POST)]
+		public List<Channel> SearchChannels(string team_id, string term)
+		{
+			var obj = new { term = term };
+			string rawdata = API.Post($"/teams/{team_id}/channels/more/search", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/create_direct", RequestType.POST)]
+		public Channel CreateDirectChannel(string team_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			string rawdata = API.Post($"/teams/{team_id}/channels/create_direct", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		/*
+		 * TODO:
+	BaseRoutes.Channels.Handle("/create_direct", ApiUserRequired(createDirectChannel)).Methods("POST")
+	BaseRoutes.Channels.Handle("/update_header", ApiUserRequired(updateChannelHeader)).Methods("POST")
+	BaseRoutes.Channels.Handle("/update_purpose", ApiUserRequired(updateChannelPurpose)).Methods("POST")
+	BaseRoutes.Channels.Handle("/update_notify_props", ApiUserRequired(updateNotifyProps)).Methods("POST")
+
+	BaseRoutes.NeedChannelName.Handle("/join", ApiUserRequired(join)).Methods("POST")
+	
+	BaseRoutes.NeedChannel.Handle("/join", ApiUserRequired(join)).Methods("POST")
+	BaseRoutes.NeedChannel.Handle("/leave", ApiUserRequired(leave)).Methods("POST")
+	BaseRoutes.NeedChannel.Handle("/remove", ApiUserRequired(removeMember)).Methods("POST")
+		 */
 		#endregion
 	}
 }

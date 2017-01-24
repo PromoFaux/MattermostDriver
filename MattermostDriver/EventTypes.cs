@@ -114,4 +114,34 @@ namespace MattermostDriver
 			return $"User ID: {data.user_id}";
 		}
 	}
+
+	public class ChannelDeletedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public string channel_id;
+		}
+
+		public override string ToString()
+		{
+			return $"Channel ID: {data.channel_id}";
+		}
+	}
+
+	public class DirectAddedEvent
+	{
+		public Data data;
+
+		public class Data
+		{
+			public string teammate_id;
+		}
+
+		public override string ToString()
+		{
+			return $"Teammate ID: {data.teammate_id}";
+		}
+	}
 }

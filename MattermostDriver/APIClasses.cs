@@ -193,4 +193,34 @@ namespace MattermostDriver
 		public int total_member_count;
 		public int active_member_count;
 	}
+
+	public class ChannelMember
+	{
+		public string channel_id;
+		public string user_id;
+		public string roles;
+		public long last_viewed_at;
+		public int msg_count;
+		public int mention_count;
+		public ChannelNotifProps notify_props;
+		public long last_update_at;
+
+		public class ChannelNotifProps
+		{
+			public string desktop;
+			public string mark_unread;
+		}
+	}
+
+	public class ChannelInfo
+	{
+		public Channel channel;
+		public ChannelMember member;
+	}
+
+	public class ChannelStats
+	{
+		public string channel_id;
+		public int member_count;
+	}
 }

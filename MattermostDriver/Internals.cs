@@ -9,6 +9,8 @@ namespace MattermostDriver
 	public delegate void TypingEventHandler(TypingEvent e);
 	public delegate void PostedEventHandler(PostedEvent e);
 	public delegate void NewUserEventHandler(NewUserEvent e);
+	public delegate void ChannelDeletedEventHandler(ChannelDeletedEvent e);
+	public delegate void DirectAddedEventHandler(DirectAddedEvent e);
 
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class ApiRoute : Attribute
