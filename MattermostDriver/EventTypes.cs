@@ -94,6 +94,21 @@ namespace MattermostDriver
 			public string team_id;
 		}
 
+		internal void Import(PrePostedEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				channel_display_name = e.data.channel_display_name,
+				channel_name = e.data.channel_name,
+				channel_type = e.data.channel_type,
+				post = JsonConvert.DeserializeObject<Post>(e.data.post),
+				sender_name = e.data.sender_name,
+				team_id = e.data.team_id
+			};
+		}
+
 		public override string ToString()
 		{
 			return $"Channel Display Name: {data.channel_display_name} | Channel Name: {data.channel_name} | Channel Type: {data.channel_type} | Sender Name: {data.sender_name} | Team ID: {data.team_id}";
@@ -130,7 +145,7 @@ namespace MattermostDriver
 		}
 	}
 
-	public class DirectAddedEvent
+	public class DirectAddedEvent : IResponse
 	{
 		public Data data;
 
@@ -142,6 +157,132 @@ namespace MattermostDriver
 		public override string ToString()
 		{
 			return $"Teammate ID: {data.teammate_id}";
+		}
+	}
+
+	public class UserUpdatedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public User user;
+		}
+
+		public override string ToString()
+		{
+			return $"User ID: {data.user.id} | Username: {data.user.username}";
+		}
+	}
+
+	//UserAdded - LeaveTeam
+	public class TeamChangeEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public string team_id;
+			public string user_id;
+		}
+
+		public override string ToString()
+		{
+			return $"Team ID: {data.team_id} | User ID: {data.user_id}";
+		}
+	}
+
+	internal class PreEphemeralMessageEvent : IResponse
+	{
+		public Data data;
+
+		internal class Data
+		{
+			public string post;
+		}
+	}
+
+	public class EphemeralMessageEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public Post post;
+		}
+
+		internal void Import(PreEphemeralMessageEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				post = JsonConvert.DeserializeObject<Post>(e.data.post)
+			};
+		}
+
+		public override string ToString()
+		{
+			return $"Post ID: {data.post.id} | User ID: {data.post.user_id}";
+		}
+	}
+
+	internal class PrePreferenceChangedEvent : IResponse
+	{
+		public Data data;
+
+		internal class Data
+		{
+			public string preference;
+		}
+	}
+
+	public class PreferenceChangedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public Preference preference;
+		}
+
+		public class Preference
+		{
+			public string user_id;
+			public string category;
+			public string name;
+			public string value;
+		}
+
+		internal void Import(PrePreferenceChangedEvent e)
+		{
+			broadcast = e.broadcast;
+			@event = e.@event;
+			data = new Data()
+			{
+				preference = JsonConvert.DeserializeObject<Preference>(e.data.preference)
+			};
+		}
+
+		public override string ToString()
+		{
+			return $"Preference: User ID: {data.preference.user_id} | Category: {data.preference.category} | Name: {data.preference.name} | Value: {data.preference.value}";
+		}
+	}
+
+	public class UserRemovedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public string remover_id;
+			public string user_id;
+		}
+
+		public override string ToString()
+		{
+			return $"Remover ID: {data.remover_id} | User ID: {data.user_id}";
 		}
 	}
 }

@@ -11,6 +11,11 @@ namespace MattermostDriver
 	public delegate void NewUserEventHandler(NewUserEvent e);
 	public delegate void ChannelDeletedEventHandler(ChannelDeletedEvent e);
 	public delegate void DirectAddedEventHandler(DirectAddedEvent e);
+	public delegate void UserUpdatedEventHandler(UserUpdatedEvent e);
+	public delegate void TeamChangeEventHandler(TeamChangeEvent e);
+	public delegate void EphemeralMessageEventHandler(EphemeralMessageEvent e);
+	public delegate void PreferenceChangedEventHandler(PreferenceChangedEvent e);
+	public delegate void UserRemovedEventHandler(UserRemovedEvent e);
 
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class ApiRoute : Attribute

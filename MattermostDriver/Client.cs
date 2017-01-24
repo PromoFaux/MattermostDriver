@@ -21,7 +21,14 @@ namespace MattermostDriver
 		public event NewUserEventHandler NewUser;
 		public event ChannelDeletedEventHandler ChannelDeleted;
 		public event DirectAddedEventHandler DirectAdded;
+		public event UserUpdatedEventHandler UserUpdated;
+		public event TeamChangeEventHandler UserAdded;
+		public event TeamChangeEventHandler LeaveTeam;
+		public event EphemeralMessageEventHandler EphemeralMessage;
+		public event PreferenceChangedEventHandler PreferenceChanged;
+		public event UserRemovedEventHandler UserRemoved;
 		#endregion
+
 		public Self Connect(string url, string username, string password, ILogger logger)
 		{
 			//Setup logging
@@ -111,9 +118,19 @@ namespace MattermostDriver
 					logger.Debug("Direct added event received: " + daevent.ToString());
 					DirectAdded?.Invoke(daevent);
 					break;
+				case "ephemeral_message":
+					EphemeralMessageEvent emevent = JsonConvert.DeserializeObject<EphemeralMessageEvent>(rawdata);
+					logger.Debug("Ephemeral message event received: " + emevent.ToString());
+					EphemeralMessage?.Invoke(emevent);
+					break;
 				case "hello":
 					logger.Debug("Hello event received.");
 					Hello?.Invoke(JsonConvert.DeserializeObject<HelloEvent>(rawdata));
+					break;
+				case "leave_team":
+					TeamChangeEvent ltevent = JsonConvert.DeserializeObject<TeamChangeEvent>(rawdata);
+					logger.Debug("Leave team event received: " + ltevent.ToString());
+					LeaveTeam?.Invoke(ltevent);
 					break;
 				case "new_user":
 					NewUserEvent nuevent = JsonConvert.DeserializeObject<NewUserEvent>(rawdata);
@@ -122,22 +139,17 @@ namespace MattermostDriver
 					break;
 				case "posted":
 					PrePostedEvent ppevent = JsonConvert.DeserializeObject<PrePostedEvent>(rawdata);
-					PostedEvent pevent = new PostedEvent()
-					{
-						broadcast = ppevent.broadcast,
-						@event = ppevent.@event,
-						data = new PostedEvent.Data()
-						{
-							channel_display_name = ppevent.data.channel_display_name,
-							channel_name = ppevent.data.channel_name,
-							channel_type = ppevent.data.channel_type,
-							sender_name = ppevent.data.sender_name,
-							team_id = ppevent.data.team_id,
-							post = JsonConvert.DeserializeObject<Post>(ppevent.data.post)
-						}
-					};
+					PostedEvent pevent = new PostedEvent();
+					pevent.Import(ppevent);
 					logger.Debug("Posted event received: " + pevent.ToString());
 					Posted?.Invoke(pevent);
+					break;
+				case "preference_changed":
+					PrePreferenceChangedEvent ppcevent = JsonConvert.DeserializeObject<PrePreferenceChangedEvent>(rawdata);
+					PreferenceChangedEvent pcevent = new PreferenceChangedEvent();
+					pcevent.Import(ppcevent);
+					logger.Debug("Preference changed event received: " + pcevent.ToString());
+					PreferenceChanged?.Invoke(pcevent);
 					break;
 				case "status_change":
 					StatusChangeEvent scevent = JsonConvert.DeserializeObject<StatusChangeEvent>(rawdata);
@@ -148,6 +160,21 @@ namespace MattermostDriver
 					TypingEvent tevent = JsonConvert.DeserializeObject<TypingEvent>(rawdata);
 					logger.Debug($"Typing event received: " + tevent.ToString());
 					Typing?.Invoke(tevent);
+					break;
+				case "user_added":
+					TeamChangeEvent uaevent = JsonConvert.DeserializeObject<TeamChangeEvent>(rawdata);
+					logger.Debug("User added event received: " + uaevent.ToString());
+					UserAdded?.Invoke(uaevent);
+					break;
+				case "user_removed":
+					UserRemovedEvent urevent = JsonConvert.DeserializeObject<UserRemovedEvent>(rawdata);
+					logger.Debug("User removed event received: " + urevent.ToString());
+					UserRemoved?.Invoke(urevent);
+					break;
+				case "user_updated":
+					UserUpdatedEvent uuevent = JsonConvert.DeserializeObject<UserUpdatedEvent>(rawdata);
+					logger.Debug($"User updated event received: " + uuevent.ToString());
+					UserUpdated?.Invoke(uuevent);
 					break;
 				default:
 					logger.Warn("Unhandled event type received: " + rawdata);
@@ -678,19 +705,72 @@ namespace MattermostDriver
 				return null;
 		}
 
-		/*
-		 * TODO:
-	BaseRoutes.Channels.Handle("/create_direct", ApiUserRequired(createDirectChannel)).Methods("POST")
-	BaseRoutes.Channels.Handle("/update_header", ApiUserRequired(updateChannelHeader)).Methods("POST")
-	BaseRoutes.Channels.Handle("/update_purpose", ApiUserRequired(updateChannelPurpose)).Methods("POST")
-	BaseRoutes.Channels.Handle("/update_notify_props", ApiUserRequired(updateNotifyProps)).Methods("POST")
+		[ApiRoute("/teams/{team_id}/channels/update_header", RequestType.POST)]
+		public Channel UpdateChannelHeader(string team_id, string channel_id, string channel_header)
+		{
+			var obj = new { channel_id = channel_id, channel_header = channel_header };
+			string rawdata = API.Post($"/teams/{team_id}/channels/update_header", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
 
-	BaseRoutes.NeedChannelName.Handle("/join", ApiUserRequired(join)).Methods("POST")
-	
-	BaseRoutes.NeedChannel.Handle("/join", ApiUserRequired(join)).Methods("POST")
-	BaseRoutes.NeedChannel.Handle("/leave", ApiUserRequired(leave)).Methods("POST")
-	BaseRoutes.NeedChannel.Handle("/remove", ApiUserRequired(removeMember)).Methods("POST")
-		 */
+		[ApiRoute("/teams/{team_id}/channels/update_purpose", RequestType.POST)]
+		public Channel UpdateChannelPurpose(string team_id, string channel_id, string channel_purpose)
+		{
+			var obj = new { channel_id = channel_id, channel_purpose = channel_purpose };
+			string rawdata = API.Post($"/teams/{team_id}/channels/update_purpose", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/update_notify_props", RequestType.POST)]
+		public ChannelMember.ChannelNotifProps UpdateChannelNotifyProps(string team_id, string channel_id, string user_id, string mark_unread, string desktop)
+		{
+			var obj = new { channel_id = channel_id, user_id = user_id, mark_unread = mark_unread, desktop = desktop };
+			string rawdata = API.Post($"/teams/{team_id}/channels/update_notify_props", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<ChannelMember.ChannelNotifProps>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/join", RequestType.POST)]
+		public Channel JoinChannelByID(string team_id, string channel_id)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/join", null);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/name/{channel_name}/join", RequestType.POST)]
+		public Channel JoinChannelByName(string team_id, string channel_name)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/channels/name/{channel_name}/join", null);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Channel>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/leave", RequestType.POST)]
+		public void LeaveChannel(string team_id, string channel_id)
+		{
+			var obj = new { channel_id = channel_id };
+			API.Post($"/teams/{team_id}/channels/{channel_id}/leave", obj);
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/{channel_id}/remove", RequestType.POST)]
+		public void RemoveMemberFromChannel(string team_id, string channel_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			API.Post($"/teams/{team_id}/channels/{channel_id}/remove", obj);
+		}
 		#endregion
 	}
 }
