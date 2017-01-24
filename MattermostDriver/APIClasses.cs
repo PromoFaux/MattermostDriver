@@ -165,4 +165,32 @@ namespace MattermostDriver
 		public long extra_update_at;
 		public string creator_id;
 	}
+
+	public class AutoCompleteResponse
+	{
+		public List<User> in_channel;
+		public List<User> out_of_channel;
+	}
+
+	public class TeamMember
+	{
+		public string team_id;
+		public string user_id;
+		public string roles;
+		public long delete_at;
+	}
+
+	public class MessageCount
+	{
+		public string team_id;
+		public int msg_count;
+		public int mention_count;
+	}
+
+	public class TeamStats
+	{
+		public string team_id;
+		public int total_member_count;
+		public int active_member_count;
+	}
 }

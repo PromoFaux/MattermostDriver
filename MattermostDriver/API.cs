@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using RestSharp;
 using System;
+using System.Collections.Generic;
 
 namespace MattermostDriver
 {
@@ -76,7 +77,7 @@ namespace MattermostDriver
 			return result.Content;
 		}
 
-		internal static string Get(string endpoint)
+		internal static string Get(string endpoint, Dictionary<string,string> parameters = null)
 		{
 			//Make sure client is logged in.
 			if (string.IsNullOrWhiteSpace(token))
@@ -87,6 +88,13 @@ namespace MattermostDriver
 
 			RestRequest request = new RestRequest(endpoint, Method.GET);
 			request.AddHeader("Authorization", "Bearer " + token);
+			if (parameters != null)
+			{
+				foreach (KeyValuePair<string,string> kvp in parameters)
+				{
+					request.AddParameter(kvp.Key, kvp.Value);
+				}
+			}
 			var result = client.Execute(request);
 
 			Client.logger.Debug($"Executed API.Get at endpoint '{endpoint}'.");

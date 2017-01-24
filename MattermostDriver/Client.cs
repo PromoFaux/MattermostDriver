@@ -154,8 +154,8 @@ namespace MattermostDriver
 		[ApiRoute("/users/create", RequestType.POST)]
 		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
 		{
-			var createUserRequest = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
-			string rawdata = API.Post($"/users/create", createUserRequest);
+			var obj = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
+			string rawdata = API.Post($"/users/create", obj);
 			if (!string.IsNullOrWhiteSpace(rawdata))
 				return JsonConvert.DeserializeObject<User>(rawdata);
 			else
@@ -175,8 +175,8 @@ namespace MattermostDriver
 		[ApiRoute("/users/login", RequestType.POST)]
 		public Self Login(string login_id, string password, string token = "", string device_id = "")
 		{
-			var loginRequest = new { login_id = login_id, password = password, token = token, device_id = device_id };
-			string rawdata = API.Post($"/users/login", loginRequest);
+			var obj = new { login_id = login_id, password = password, token = token, device_id = device_id };
+			string rawdata = API.Post($"/users/login", obj);
 			if (!string.IsNullOrWhiteSpace(rawdata))
 				return JsonConvert.DeserializeObject<Self>(rawdata);
 			else
@@ -212,8 +212,8 @@ namespace MattermostDriver
 		[ApiRoute("/users/search", RequestType.POST)]
 		public List<User> SearchUsers(string term, string team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false)
 		{
-			var searchUserRequest = new { term = term, team_id = team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive };
-			string rawdata = API.Post($"/users/search", searchUserRequest);
+			var obj = new { term = term, team_id = team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive };
+			string rawdata = API.Post($"/users/search", obj);
 			if (!string.IsNullOrWhiteSpace(rawdata))
 				return JsonConvert.DeserializeObject<List<User>>(rawdata);
 			else
@@ -285,21 +285,21 @@ namespace MattermostDriver
 		{
 			if (!string.IsNullOrWhiteSpace(team_id))
 			{
-				var request = new { user_id = user_id, team_id = team_id, new_roles = new_roles };
-				API.Post($"/users/update_roles", request);
+				var obj = new { user_id = user_id, team_id = team_id, new_roles = new_roles };
+				API.Post($"/users/update_roles", obj);
 			}
 			else
 			{
-				var request = new { user_id = user_id, new_roles = new_roles };
-				API.Post($"/users/{user_id}/update_roles", request);
+				var obj = new { user_id = user_id, new_roles = new_roles };
+				API.Post($"/users/{user_id}/update_roles", obj);
 			}
 		}
 
 		[ApiRoute("/users/update_active", RequestType.POST)]
 		public User UpdateActive(string user_id, bool active)
 		{
-			var request = new { user_id = user_id, active = active };
-			string rawdata = API.Post($"/users/update_active", request);
+			var obj = new { user_id = user_id, active = active };
+			string rawdata = API.Post($"/users/update_active", obj);
 			if (!string.IsNullOrWhiteSpace(rawdata))
 				return JsonConvert.DeserializeObject<User>(rawdata);
 			else
@@ -307,38 +307,200 @@ namespace MattermostDriver
 		}
 
 		[ApiRoute("/users/update_notify", RequestType.POST)]
-		//public void UpdateNotify(string user_id, string email, string desktop_sound, string desktop, string comments, string desktop_duration = "", string first_name = "", string mention_keys = "", string push = "", string push_status = "")
 		public void UpdateNotify(string user_id, string comments, string desktop, string desktop_sound, string email, string channel = "", string desktop_duration = "", string first_name = "", string mention_keys = "", string push = "", string push_status = "")
 		{
 			var obj = new { user_id = user_id, comments = comments, desktop = desktop, desktop_sound = desktop_sound, email = email, channel = channel, desktop_duration = desktop_duration, first_name = first_name, mention_keys = mention_keys, push = push, push_status = push_status };
 			API.Post($"/users/update_notify", obj);
 		}
 
-		/*
-		 * TODO:
 		[ApiRoute("/users/newpassword", RequestType.POST)]
+		public void NewPassword(string user_id, string current_password, string new_password)
+		{
+			var obj = new { user_id = user_id, current_password = current_password, new_password = new_password };
+			API.Post($"/users/newpassword", obj);
+		}
+
 		[ApiRoute("/users/send_password_reset", RequestType.POST)]
-		[ApiRoute("/users/reset_password", RequestType.POST)]
-		[ApiRoute("/users/revoke_session", RequestType.POST)]
-		[ApiRoute("/users/attach_device", RequestType.POST)]
-		[ApiRoute("/users/verify_email", RequestType.POST)]
-		[ApiRoute("/users/resend_verification", RequestType.POST)]
-		[ApiRoute("/users/newimage", RequestType.POST)]
+		public void SendPasswordReset(string email)
+		{
+			var obj = new { email = email };
+			API.Post("/users/send_password_reset", obj);
+		}
+
 		[ApiRoute("/users/autocomplete", RequestType.GET)]
+		public List<User> AutoCompleteUsers(string term)
+		{
+			string rawdata = API.Get($"/users/autocomplete", new Dictionary<string, string>() { { "term", term } });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<User>>(rawdata);
+			else
+				return null;
+		}
+
 		[ApiRoute("/teams/{team_id}/users/autocomplete", RequestType.GET)]
+		public List<User> AutoCompleteUsersInTeam(string team_id, string term)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/users/autocomplete", new Dictionary<string, string>() { { "term", term } });
+			var response = new { in_team = new List<User>() };
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return (JsonConvert.DeserializeAnonymousType(rawdata, response)).in_team;
+			else
+				return null;
+		}
+
 		[ApiRoute("/teams/{team_id}/channels/{channel_id}/users/autocomplete", RequestType.GET)]
-		[ApiRoute("/users/mfa", RequestType.POST)]
-		[ApiRoute("/users/generate_mfa_secret", RequestType.POST)]
-		[ApiRoute("/users/update_mfa", RequestType.POST)]
-		[ApiRoute("/users/claim/email_to_oauth", RequestType.POST)]
-		[ApiRoute("/users/claim/oauth_to_email", RequestType.POST)]
-		[ApiRoute("/users/claim/email_to_ldap", RequestType.POST)]
-		[ApiRoute("/users/claim/ldap_to_email", RequestType.POST)]
-		[ApiRoute("/users/{user_id}/get", RequestType.GET)]
-		[ApiRoute("/users/{user_id}/sessions", RequestType.GET)]
-		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
-		[ApiRoute("/users/{user_id}/image", RequestType.GET)]
-		*/
+		public AutoCompleteResponse AutoCompleteUsersInChannel(string team_id, string channel_id, string term)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/users/autocomplete", new Dictionary<string, string>() { { "term", term } });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<AutoCompleteResponse>(rawdata);
+			else
+				return null;
+		}
+		#endregion
+
+		#region Team Methods
+		[ApiRoute("/teams/create", RequestType.POST)]
+		public Team CreateTeam(string name, string display_name, string type)
+		{
+			var obj = new { name = name, display_name = display_name, type = type };
+			string rawdata = API.Post($"/teams/create", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Team>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/all", RequestType.GET)]
+		public Dictionary<string,Team> GetAllTeams()
+		{
+			string rawdata = API.Get("/teams/all");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, Team>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/members", RequestType.GET)]
+		public List<TeamMember> GetAllTeamsAsMember()
+		{
+			string rawdata = API.Get("/teams/members");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/unread", RequestType.GET)]
+		public List<MessageCount> GetUnreadsFromTeam(string id)
+		{
+			string rawdata = API.Get("/teams/unread", new Dictionary<string, string>() { { "id", id } });
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<MessageCount>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/members/{offset}/{limit}", RequestType.GET)]
+		public List<TeamMember> GetTeamMembers(string team_id, int offset, int limit)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/members/{offset}/{limit}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
+		public TeamMember GetTeamMember(string team_id, string user_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/members/{user_id}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<TeamMember>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
+		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/members/ids", ids);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/me", RequestType.GET)]
+		public Team GetTeamByID(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/me");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Team>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/name/{team_name}", RequestType.GET)]
+		public Team GetTeamByName(string team_name)
+		{
+			string rawdata = API.Get($"/teams/name/{team_name}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Team>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/update", RequestType.POST)]
+		public Team UpdateTeam(string team_id, Team team)
+		{
+			string rawdata = API.Post($"/teams/{team_id}/update", team);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Team>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
+		public TeamStats GetTeamStats(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/stats");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<TeamStats>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("teams/{team_id}/add_user_to_team", RequestType.POST)]
+		public void AddUserToTeam(string team_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			API.Post($"teams/{team_id}/add_user_to_team", obj);
+		}
+
+		[ApiRoute("/teams/{team_id}/remove_user_from_team", RequestType.POST)]
+		public void RemoveUserFromTeam(string team_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			API.Post($"/teams/{team_id}/remove_user_from_team", obj);
+		}
+
+		[ApiRoute("/teams/all_team_listings", RequestType.GET)]
+		public Dictionary<string,Team> GetAllAvailableTeams()
+		{
+			string rawdata = API.Get($"/teams/all_team_listings");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, Team>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/update_member_roles", RequestType.POST)]
+		public void UpdateTeamMemberRoles(string team_id, string user_id, string new_roles)
+		{
+			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
+			API.Post($"/teams/{team_id}/update_member_roles", obj);
+		}
 		#endregion
 	}
 }
