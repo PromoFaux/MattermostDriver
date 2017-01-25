@@ -237,4 +237,23 @@ namespace MattermostDriver
 		public string emoji_name;
 		public long create_at;
 	}
+
+	public class Preference
+	{
+		public string user_id;
+		public string category;
+		public string name;
+		public string value;
+	}
+
+	public class IncomingWebook
+	{
+		public string id;
+		public long create_at;
+		public long update_at;
+		public long delete_at;
+		public string channel_id;
+		public string description;
+		public string display_name;
+	}
 }

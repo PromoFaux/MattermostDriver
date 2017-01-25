@@ -934,5 +934,69 @@ namespace MattermostDriver
 				return null;
 		}
 		#endregion
+
+		#region Preference Methods
+		[ApiRoute("/preferences/save", RequestType.POST)]
+		public void UpdatePreferences(List<Preference> preferences)
+		{
+			API.Post($"/preferences/save", preferences);
+		}
+
+		[ApiRoute("/preferences/delete", RequestType.POST)]
+		public void DeletePreferences(List<Preference> preferences)
+		{
+			API.Post($"/preferences/delete", preferences);
+		}
+
+		[ApiRoute("/preferences/{category}", RequestType.GET)]
+		public List<Preference> GetPreferences(string category)
+		{
+			string rawdata = API.Get($"/preferences/{category}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Preference>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/preferences/{category}/{name}", RequestType.GET)]
+		public Preference GetPreference(string category, string name)
+		{
+			string rawdata = API.Get($"/preferences/{category}/{name}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Preference>(rawdata);
+			else
+				return null;
+		}
+		#endregion
+
+		#region Incoming Webhook Methods
+		[ApiRoute("/teams/{team_id}/hooks/incoming/list", RequestType.GET)]
+		public List<IncomingWebook> GetIncomingWebhooks(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/hooks/incoming/list");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<IncomingWebook>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/hooks/incoming/create", RequestType.POST)]
+		public IncomingWebook CreateIncomingWebhook(string team_id, string channel_id, string display_name = "", string description = "")
+		{
+			var obj = new { channel_id = channel_id, display_name = display_name, description = description };
+			string rawdata = API.Post($"/teams/{team_id}/hooks/incoming/create", obj);
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<IncomingWebook>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/teams/{team_id}/hooks/incoming/delete", RequestType.POST)]
+		public void DeleteIncomingWebhook(string team_id, string id)
+		{
+			var obj = new { id = id };
+			API.Post($"/teams/{team_id}/hooks/incoming/delete", obj);
+		}
+		#endregion
 	}
 }

@@ -244,15 +244,7 @@ namespace MattermostDriver
 		public class Data
 		{
 			public Preference preference;
-		}
-
-		public class Preference
-		{
-			public string user_id;
-			public string category;
-			public string name;
-			public string value;
-		}
+		}		
 
 		internal void Import(PrePreferenceChangedEvent e)
 		{
