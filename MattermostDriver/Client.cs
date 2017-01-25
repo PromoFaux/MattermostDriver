@@ -660,6 +660,16 @@ namespace MattermostDriver
 				return null;
 		}
 
+		[ApiRoute("/teams/{team_id}/channels/counts", RequestType.GET)]
+		public ChannelCounts GetChannelCounts(string team_id)
+		{
+			string rawdata = API.Get($"/teams/{team_id}/channels/counts");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<ChannelCounts>(rawdata);
+			else
+				return null;
+		}
+
 		[ApiRoute("/teams/{team_id}/channels/{channel_id}/stats", RequestType.GET)]
 		public ChannelStats GetChannelStats(string team_id, string channel_id)
 		{

@@ -598,4 +598,10 @@ namespace MattermostDriver
 		public string name;
 		public int value;
 	}
+
+	public class ChannelCounts
+	{
+		public Dictionary<string, int> counts;
+		public Dictionary<string, long> update_times;
+	}
 }
