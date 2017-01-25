@@ -374,6 +374,10 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 
+		// Not implemented
+		// [ApiRoute("/users/{user_id}/image"), RequestType.POST)]
+		// [ApiRoute("/users/{user_id}/image"), RequestType.GET)]
+
 		[ApiRoute("/users/login", RequestType.POST)]
 		public Self Login(string login_id, string password, string token = "", string device_id = "")
 		{
@@ -425,7 +429,7 @@ namespace MattermostDriver
 		}
 
 		[ApiRoute("/users/{user_id}/mfa", RequestType.GET)]
-		public bool IsMFAActive(string user_id)
+		public bool CheckMFAActive(string user_id)
 		{
 			throw new NotImplementedException();
 		}
@@ -479,117 +483,125 @@ namespace MattermostDriver
 		//	API.Post($"/users/update_notify", obj);
 		//}
 
+		#region Team Methods
+		[ApiRoute("/teams", RequestType.POST)]
+		public Team CreateTeam(string name, string display_name, string type)
+		{
+			throw new NotImplementedException();
+			var obj = new { name = name, display_name = display_name, type = type };
+			return API.Post($"/teams", obj).Deserialize<Team>();
+		}
+
+		[ApiRoute("/teams", RequestType.GET)]
+		public List<Team> GetTeams(int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return API.Get("/teams", options).Deserialize<List<Team>>();
+		}
+
+		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
+		public Team UpdateTeam(Team team)
+		{
+			throw new NotImplementedException();
+			return API.Put($"/teams/{team.id}", team).Deserialize<Team>();
+		}
+
+		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
+		public Team UpdateTeam(string team_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/name/{name}", RequestType.GET)]
+		public Team GetTeamByName(string name)
+		{
+			throw new NotImplementedException();
+			return API.Get($"/teams/name/{name}").Deserialize<Team>();
+		}
+
+		[ApiRoute("/teams/search", RequestType.POST)]
+		public List<Team> SearchTeams()
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/{team_id}/unread", RequestType.GET)]
+		public List<MessageCount> GetUnreadsFromTeam(string team_id)
+		{
+			throw new NotImplementedException();
+			return API.Get($"/teams/{team_id}/unread").Deserialize<List<MessageCount>>();
+		}
+
+		[ApiRoute("/users/{user_id}/teams/unread", RequestType.GET)]
+		public List<MessageCount> GetUnreadsFromAllTeams(string user_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/{team_id}/invite", RequestType.POST)]
+		public void InviteUserToTeam(string team_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
+		public TeamStats GetTeamStats(string team_id)
+		{
+			throw new NotImplementedException();
+			return API.Get($"/teams/{team_id}/stats").Deserialize<TeamStats>();
+		}
+
+		[ApiRoute("/teams/{team_id}/members", RequestType.GET)]
+		public List<TeamMember> GetTeamMembers(string team_id, int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return API.Get($"/teams/{team_id}/members").Deserialize<List<TeamMember>>();
+		}
+
+		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
+		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
+		{
+			throw new NotImplementedException();
+			return API.Post($"/teams/{team_id}/members/ids", ids).Deserialize<List<TeamMember>>();
+		}
+
+		[ApiRoute("/teams/{team_id}/members", RequestType.POST)]
+		public void CreateTeamMember(string team_id, string invite_id = "", string hash = "", string data = "")
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/{team_id}/members/{user_id}/roles", RequestType.POST)]
+		public void UpdateTeamMemberRoles(string team_id, string user_id, string new_roles)
+		{
+			throw new NotImplementedException();
+			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
+			API.Post($"/teams/{team_id}/members/{user_id}/roles", obj);
+		}
+
+		[ApiRoute("/teams/name/{name}/exists", RequestType.GET)]
+		public bool CheckTeamExists(string name)
+		{
+			throw new NotImplementedException();
+		}
+
+		// Not implemented
+		// [ApiRoute("/teams/{team_id}/import", RequestType.POST)]
+		#endregion
+
 		//#region Team Methods
-		//[ApiRoute("/teams/create", RequestType.POST)]
-		//public Team CreateTeam(string name, string display_name, string type)
-		//{
-		//	var obj = new { name = name, display_name = display_name, type = type };
-		//	string rawdata = API.Post($"/teams/create", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Team>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/all", RequestType.GET)]
-		//public Dictionary<string,Team> GetAllTeams()
-		//{
-		//	string rawdata = API.Get("/teams/all");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Dictionary<string, Team>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/members", RequestType.GET)]
-		//public List<TeamMember> GetAllTeamsAsMember()
-		//{
-		//	string rawdata = API.Get("/teams/members");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/unread", RequestType.GET)]
-		//public List<MessageCount> GetUnreadsFromTeam(string id)
-		//{
-		//	string rawdata = API.Get("/teams/unread", new Dictionary<string, string>() { { "id", id } });
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<MessageCount>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/members/{offset}/{limit}", RequestType.GET)]
-		//public List<TeamMember> GetTeamMembers(string team_id, int offset, int limit)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/members/{offset}/{limit}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
-		//public TeamMember GetTeamMember(string team_id, string user_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/members/{user_id}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<TeamMember>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
-		//public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/members/ids", ids);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<TeamMember>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/me", RequestType.GET)]
-		//public Team GetTeamByID(string team_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/me");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Team>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/name/{team_name}", RequestType.GET)]
-		//public Team GetTeamByName(string team_name)
-		//{
-		//	string rawdata = API.Get($"/teams/name/{team_name}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Team>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/update", RequestType.POST)]
-		//public Team UpdateTeam(string team_id, Team team)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/update", team);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Team>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
-		//public TeamStats GetTeamStats(string team_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/stats");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<TeamStats>(rawdata);
-		//	else
-		//		return null;
-		//}
 
 		//[ApiRoute("teams/{team_id}/add_user_to_team", RequestType.POST)]
 		//public void AddUserToTeam(string team_id, string user_id)
@@ -605,23 +617,11 @@ namespace MattermostDriver
 		//	API.Post($"/teams/{team_id}/remove_user_from_team", obj);
 		//}
 
-		//[ApiRoute("/teams/all_team_listings", RequestType.GET)]
-		//public Dictionary<string,Team> GetAllAvailableTeams()
-		//{
-		//	string rawdata = API.Get($"/teams/all_team_listings");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Dictionary<string, Team>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/update_member_roles", RequestType.POST)]
-		//public void UpdateTeamMemberRoles(string team_id, string user_id, string new_roles)
-		//{
-		//	var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
-		//	API.Post($"/teams/{team_id}/update_member_roles", obj);
-		//}
 		//#endregion
+
+		#region Channel Methods
+
+		#endregion
 
 		//#region Channel Methods
 
