@@ -55,7 +55,6 @@
     <Compile Include="API.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="EventTypes.cs" />
-    <Compile Include="Extensions.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Internals.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

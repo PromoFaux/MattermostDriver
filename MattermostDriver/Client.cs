@@ -62,7 +62,7 @@ namespace MattermostDriver
 			API.Initialize();
 
 			//Login and receive Session Token
-			string rawdata = API.PostGetAuth(new { login_id = username, password = password });
+			Self self = API.PostGetAuth(new { login_id = username, password = password });
 
 			//Connect to Websocket
 			socket = new WebSocket(websocket);
@@ -72,11 +72,7 @@ namespace MattermostDriver
 			socket.Open();
 			seq = 1;
 
-			//Return Self information
-			if (!string.IsNullOrWhiteSpace(rawdata))
-				return JsonConvert.DeserializeObject<Self>(rawdata);
-			else
-				return null;
+			return self;
 		}
 
 		#region Websocket Handlers
@@ -233,16 +229,14 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
-			string rawdata = API.Post($"/users", obj);
-			return rawdata.Deserialize<User>();
+			return API.Post<User>($"/users", obj);
 		}
 
 		[ApiRoute("/users/{user_id}", RequestType.PUT)]
 		public User UpdateUser(User user)
 		{
 			throw new NotImplementedException();
-			string rawdata = API.Put($"/users/{user.id}", user);
-			return rawdata.Deserialize<User>();
+			return API.Put<User>($"/users/{user.id}", user);
 		}
 
 		[ApiRoute("/users/{user_id}/patch", RequestType.PUT)]
@@ -258,12 +252,12 @@ namespace MattermostDriver
 			if (!string.IsNullOrWhiteSpace(team_id))
 			{
 				var obj = new { user_id = user_id, team_id = team_id, new_roles = new_roles };
-				API.Put($"/users/{user_id}/roles", obj);
+				API.Put<string>($"/users/{user_id}/roles", obj);
 			}
 			else
 			{
 				var obj = new { user_id = user_id, new_roles = new_roles };
-				API.Put($"/users/{user_id}/roles", obj);
+				API.Put<string>($"/users/{user_id}/roles", obj);
 			}
 		}
 
@@ -272,7 +266,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { user_id = user_id, current_password = current_password, new_password = new_password };
-			API.Put($"/users/{user_id}/password", obj);
+			API.Put<string>($"/users/{user_id}/password", obj);
 		}
 
 		[ApiRoute("/users/{user_id}/password/reset", RequestType.POST)]
@@ -280,7 +274,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { new_password = new_password };
-			API.Post($"/users/{user_id}/password/reset", obj);
+			API.Post<string>($"/users/{user_id}/password/reset", obj);
 		}
 
 		[ApiRoute("/users/{user_id}/password/reset/send", RequestType.POST)]
@@ -288,7 +282,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { email = email };
-			API.Post($"/users/{user_id}/password/reset/send", obj);
+			API.Post<string>($"/users/{user_id}/password/reset/send", obj);
 		}
 
 		[ApiRoute("/users", RequestType.GET)]
@@ -307,35 +301,35 @@ namespace MattermostDriver
 			if (!string.IsNullOrWhiteSpace(not_in_channel))
 				options.Add("not_in_channel", not_in_channel);
 
-			return API.Get("/users", options).Deserialize<List<User>>();
+			return API.Get<List<User>>("/users", options);
 		}
 
 		[ApiRoute("/users/{user_id}", RequestType.GET)]
 		public User GetUserByID(string user_id)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/users/{user_id}").Deserialize<User>();
+			return API.Get<User>($"/users/{user_id}");
 		}
 
 		[ApiRoute("/users/username/{username}", RequestType.GET)]
 		public User GetUserByName(string username)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/users/username/{username}").Deserialize<User>();
+			return API.Get<User>($"/users/username/{username}");
 		}
 
 		[ApiRoute("/users/email/{email}", RequestType.GET)]
 		public User GetUserByEmail(string email)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/users/email/{email}").Deserialize<User>();
+			return API.Get<User>($"/users/email/{email}");
 		}
 
 		[ApiRoute("/users/ids", RequestType.POST)]
 		public Dictionary<string, User> GetUsersByIDs(List<string> ids)
 		{
 			throw new NotImplementedException();
-			return API.Post($"/users/ids", ids).Deserialize<Dictionary<string, User>>();
+			return API.Post<Dictionary<string,User>>($"/users/ids", ids);
 		}
 
 		[ApiRoute("/users/search", RequestType.POST)]
@@ -343,7 +337,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { term = term, team_id = team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive };
-			return API.Post($"/users/search", obj).Deserialize<List<User>>();
+			return API.Post<List<User>>($"/users/search", obj);
 		}
 
 		[ApiRoute("/users/autocomplete", RequestType.GET)]
@@ -359,7 +353,7 @@ namespace MattermostDriver
 			if (!string.IsNullOrWhiteSpace(in_team))
 				options.Add("in_team", in_team);
 
-			return API.Get($"/users/autocomplete", options).Deserialize<List<User>>();
+			return API.Get<List<User>>($"/users/autocomplete", options);
 		}
 
 		[ApiRoute("/users/{user_id}/email/verify", RequestType.POST)]
@@ -383,14 +377,14 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { login_id = login_id, password = password, token = token, device_id = device_id };
-			return API.PostGetAuth(obj).Deserialize<Self>();
+			return API.PostGetAuth(obj);
 		}
 
 		[ApiRoute("/users/logout", RequestType.POST)]
 		public void Logout()
 		{
 			throw new NotImplementedException();
-			API.Post($"/users/logout", null);
+			API.Post<string>($"/users/logout", null);
 		}
 
 		[ApiRoute("/users/login/switch", RequestType.POST)]
@@ -415,11 +409,7 @@ namespace MattermostDriver
 		public List<Audit> GetAudits(string user_id)
 		{
 			throw new NotImplementedException();
-			string rawdata = API.Get("/users/{user_id}/audits");
-			if (!string.IsNullOrWhiteSpace(rawdata))
-				return JsonConvert.DeserializeObject<List<Audit>>(rawdata);
-			else
-				return null;
+			return API.Get<List<Audit>>("/users/{user_id}/audits");
 		}
 
 		[ApiRoute("/users/{user_id}/device", RequestType.PUT)]
@@ -453,43 +443,13 @@ namespace MattermostDriver
 		}
 		#endregion
 
-		//#region User Methods
-
-		//[ApiRoute("/users/me", RequestType.GET)]
-		//public Self Me()
-		//{
-		//	string rawdata = API.Get($"/users/me");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Self>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/users/update_active", RequestType.POST)]
-		//public User UpdateActive(string user_id, bool active)
-		//{
-		//	var obj = new { user_id = user_id, active = active };
-		//	string rawdata = API.Post($"/users/update_active", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<User>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/users/update_notify", RequestType.POST)]
-		//public void UpdateNotify(string user_id, string comments, string desktop, string desktop_sound, string email, string channel = "", string desktop_duration = "", string first_name = "", string mention_keys = "", string push = "", string push_status = "")
-		//{
-		//	var obj = new { user_id = user_id, comments = comments, desktop = desktop, desktop_sound = desktop_sound, email = email, channel = channel, desktop_duration = desktop_duration, first_name = first_name, mention_keys = mention_keys, push = push, push_status = push_status };
-		//	API.Post($"/users/update_notify", obj);
-		//}
-
 		#region Team Methods
 		[ApiRoute("/teams", RequestType.POST)]
 		public Team CreateTeam(string name, string display_name, string type)
 		{
 			throw new NotImplementedException();
 			var obj = new { name = name, display_name = display_name, type = type };
-			return API.Post($"/teams", obj).Deserialize<Team>();
+			return API.Post<Team>($"/teams", obj);
 		}
 
 		[ApiRoute("/teams", RequestType.GET)]
@@ -502,14 +462,14 @@ namespace MattermostDriver
 				{ "per_page", per_page.ToString() }
 			};
 
-			return API.Get("/teams", options).Deserialize<List<Team>>();
+			return API.Get<List<Team>>("/teams", options);
 		}
 
 		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
 		public Team UpdateTeam(Team team)
 		{
 			throw new NotImplementedException();
-			return API.Put($"/teams/{team.id}", team).Deserialize<Team>();
+			return API.Put<Team>($"/teams/{team.id}", team);
 		}
 
 		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
@@ -522,7 +482,7 @@ namespace MattermostDriver
 		public Team GetTeamByName(string name)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/teams/name/{name}").Deserialize<Team>();
+			return API.Get<Team>($"/teams/name/{name}");
 		}
 
 		[ApiRoute("/teams/search", RequestType.POST)]
@@ -535,7 +495,7 @@ namespace MattermostDriver
 		public List<MessageCount> GetUnreadsFromTeam(string team_id)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/teams/{team_id}/unread").Deserialize<List<MessageCount>>();
+			return API.Get<List<MessageCount>>($"/teams/{team_id}/unread");
 		}
 
 		[ApiRoute("/users/{user_id}/teams/unread", RequestType.GET)]
@@ -554,7 +514,7 @@ namespace MattermostDriver
 		public TeamStats GetTeamStats(string team_id)
 		{
 			throw new NotImplementedException();
-			return API.Get($"/teams/{team_id}/stats").Deserialize<TeamStats>();
+			return API.Get<TeamStats>($"/teams/{team_id}/stats");
 		}
 
 		[ApiRoute("/teams/{team_id}/members", RequestType.GET)]
@@ -567,14 +527,14 @@ namespace MattermostDriver
 				{ "per_page", per_page.ToString() }
 			};
 
-			return API.Get($"/teams/{team_id}/members").Deserialize<List<TeamMember>>();
+			return API.Get<List<TeamMember>>($"/teams/{team_id}/members");
 		}
 
 		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
 		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
 		{
 			throw new NotImplementedException();
-			return API.Post($"/teams/{team_id}/members/ids", ids).Deserialize<List<TeamMember>>();
+			return API.Post<List<TeamMember>>($"/teams/{team_id}/members/ids", ids);
 		}
 
 		[ApiRoute("/teams/{team_id}/members", RequestType.POST)]
@@ -588,7 +548,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
-			API.Post($"/teams/{team_id}/members/{user_id}/roles", obj);
+			API.Post<string>($"/teams/{team_id}/members/{user_id}/roles", obj);
 		}
 
 		[ApiRoute("/teams/name/{name}/exists", RequestType.GET)]
@@ -601,268 +561,143 @@ namespace MattermostDriver
 		// [ApiRoute("/teams/{team_id}/import", RequestType.POST)]
 		#endregion
 
-		//#region Team Methods
-
-		//[ApiRoute("teams/{team_id}/add_user_to_team", RequestType.POST)]
-		//public void AddUserToTeam(string team_id, string user_id)
-		//{
-		//	var obj = new { user_id = user_id };
-		//	API.Post($"teams/{team_id}/add_user_to_team", obj);
-		//}
-
-		//[ApiRoute("/teams/{team_id}/remove_user_from_team", RequestType.POST)]
-		//public void RemoveUserFromTeam(string team_id, string user_id)
-		//{
-		//	var obj = new { user_id = user_id };
-		//	API.Post($"/teams/{team_id}/remove_user_from_team", obj);
-		//}
-
-		//#endregion
-
 		#region Channel Methods
+		[ApiRoute("/channels", RequestType.POST)]
+		public Channel CreateChannel(string team_id, string name, string display_name, string type, string purpose = "", string header = "")
+		{
+			throw new NotImplementedException();
+			var obj = new { team_id = team_id, name = name, display_name = display_name, type = type, purpose = purpose, header = header };
+			return API.Post<Channel>($"/teams/{team_id}/channels/create", obj);
+		}
 
+		[ApiRoute("/teams/{team_id}/channels", RequestType.GET)]
+		public List<Channel> GetChannels(string team_id, int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return API.Get<List<Channel>>($"/teams/{team_id}/channels", options);
+		}
+
+		[ApiRoute("/channels/{channel_id}", RequestType.GET)]
+		public ChannelInfo GetChannelByID(string channel_id)
+		{
+			throw new NotImplementedException();
+			return API.Get<ChannelInfo>($"/channels/{channel_id}");
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/name/{name}", RequestType.GET)]
+		public ChannelInfo GetChannelByNameWithTeamID(string team_id, string name)
+		{
+			throw new NotImplementedException();
+			return API.Get<ChannelInfo>($"/teams/{team_id}/channels/name/{name}");
+		}
+
+		[ApiRoute("/teams/name/{team_name}/channels/name/{channel_name}", RequestType.GET)]
+		public ChannelInfo GetChannelByNameWithTeamName(string team_name, string channel_name)
+		{
+			throw new NotImplementedException();
+			return API.Get<ChannelInfo>($"/teams/name/{team_name}/channels/name/{channel_name}");
+		}
+
+		[ApiRoute("/channels/ids", RequestType.POST)]
+		public List<Channel> GetChannelsByIDs(List<string> channels)
+		{
+			throw new NotImplementedException();
+			return API.Post<List<Channel>>($"/channels/ids", channels);
+		}
+
+		[ApiRoute("/channels/{channel_id}", RequestType.PUT)]
+		public Channel UpdateChannel(Channel channel)
+		{
+			throw new NotImplementedException();
+			return API.Post<Channel>($"/channels/{channel.id}", channel);
+		}
+
+		[ApiRoute("/channels/{channel_id}/patch", RequestType.PUT)]
+		public Channel UpdateChannel(string channel_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/channels/{channel_id}", RequestType.DELETE)]
+		public void DeleteChannel(string channel_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/channels/{channel_id}/unread", RequestType.GET)]
+		public void GetChannelUnreads(string channel_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/channels/{channel_id}/stats", RequestType.GET)]
+		public ChannelStats GetChannelStats(string channel_id)
+		{
+			throw new NotImplementedException();
+			return API.Get<ChannelStats>($"/channels/{channel_id}/stats");
+		}
+
+		[ApiRoute("/channels/{channel_id}/members", RequestType.GET)]
+		public List<ChannelMember> GetChannelMembers(string channel_id, int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return API.Get<List<ChannelMember>>($"/channels/{channel_id}/members", options);
+		}
+
+		[ApiRoute("/channels/{channel_id}/members", RequestType.POST)]
+		public ChannelMember CreateChannelMember(string channel_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/channels/{channel_id}/members/ids", RequestType.POST)]
+		public List<ChannelMember> GetChannelMembersByIDs(string channel_id, List<string> ids)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/teams/{team_id}/channels/autocomplete", RequestType.GET)]
+		public List<Channel> AutoCompleteChannels(string team_id, string term)
+		{
+			throw new NotImplementedException();
+			return API.Get<List<Channel>>($"/teams/{team_id}/channels/autocomplete", new Dictionary<string, string>() { { "term", term } });
+		}
+
+		[ApiRoute("/channels/{channel_id}/members/{user_id}/view", RequestType.POST)]
+		public void ViewChannel(string channel_id, string user_id, string prev_channel_id = "")
+		{
+			throw new NotImplementedException();
+			var obj = new { channel_id = channel_id, prev_channel_id = prev_channel_id };
+			API.Post<string>($"/channels/{channel_id}/members/{user_id}/view", obj);
+		}
+
+		[ApiRoute("/channels/{channel_id}/members/{user_id}/roles", RequestType.PUT)]
+		public void UpdateChannelMemberRoles(string channel_id, string user_id, string new_roles)
+		{
+			throw new NotImplementedException();
+			var obj = new { user_id = user_id, new_roles = new_roles };
+			API.Put<string>($"/channels/{channel_id}/members/{user_id}/roles", obj);
+		}
+
+		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.DELETE)]
+		public void DeleteChannelMember(string channel_id, string user_id)
+		{
+			throw new NotImplementedException();
+		}
 		#endregion
-
-		//#region Channel Methods
-
-		//[ApiRoute("/teams/{team_id}/channels/create", RequestType.POST)]
-		//public Channel CreateChannel(string team_id, string name, string display_name, string type, string purpose = "", string header = "")
-		//{
-		//	var obj = new { team_id = team_id, name = name, display_name = display_name, type = type, purpose = purpose, header = header };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/create", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/update", RequestType.POST)]
-		//public Channel UpdateChannel(string team_id, Channel channel)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/update", channel);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/view", RequestType.POST)]
-		//public void ViewChannel(string team_id, string channel_id, string prev_channel_id = "")
-		//{
-		//	var obj = new { team_id = team_id, channel_id = channel_id, prev_channel_id = prev_channel_id };
-		//	API.Post($"/teams/{team_id}/channels/view", obj);
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/", RequestType.GET)]
-		//public List<Channel> GetJoinedChannels(string team_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/name/{channel_name}", RequestType.GET)]
-		//public Channel GetChannelByName(string team_id, string channel_name)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/name/{channel_name}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/more/{offset}/{limit}", RequestType.GET)]
-		//public List<Channel> GetChannelsNotJOined(string team_id, int offset, int limit)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/more/{offset}/{limit}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/members", RequestType.GET)]
-		//public List<ChannelMember> GetChannelMembers(string team_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/members");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<ChannelMember>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/", RequestType.GET)]
-		//public ChannelInfo GetChannelByID(string team_id, string channel_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<ChannelInfo>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/counts", RequestType.GET)]
-		//public ChannelCounts GetChannelCounts(string team_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/counts");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<ChannelCounts>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/stats", RequestType.GET)]
-		//public ChannelStats GetChannelStats(string team_id, string channel_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/stats");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<ChannelStats>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/delete", RequestType.POST)]
-		//public void DeleteChannel(string team_id, string channel_id)
-		//{
-		//	API.Post($"/teams/{team_id}/channels/{channel_id}/delete", null);
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/add", RequestType.POST)]
-		//public void AddUserToChannel(string team_id, string channel_id, string user_id)
-		//{
-		//	var obj = new { user_id = user_id };
-		//	API.Post($"/teams/{team_id}/channels/{channel_id}/add", obj);
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/members/{user_id}", RequestType.GET)]
-		//public ChannelMember GetChannelMember(string team_id, string channel_id, string user_id)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/{channel_id}/members/{user_id}");
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<ChannelMember>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/members/ids", RequestType.POST)]
-		//public List<ChannelMember> GetChannelMembers(string team_id, string channel_id, List<string> ids)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/members/ids", ids);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<ChannelMember>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//// -- Doesn't exist in 3.6.1, will return in 3.7
-		////[ApiRoute("/teams/{team_id}/channels/{channel_id}/update_member_roles", RequestType.POST)]
-		////public void UpdateChannelMemberRoles(string team_id, string channel_id, string user_id, string new_roles)
-		////{
-		////	var obj = new { user_id = user_id, new_roles = new_roles };
-		////	API.Post($"/teams/{team_id}/channels/{channel_id}/update_member_roles", obj);
-		////}
-
-		//[ApiRoute("/teams/{team_id}/channels/autocomplete", RequestType.GET)]
-		//public List<Channel> AutoCompleteChannels(string team_id, string term)
-		//{
-		//	string rawdata = API.Get($"/teams/{team_id}/channels/autocomplete", new Dictionary<string, string>() { { "term", term } });
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/more/search", RequestType.POST)]
-		//public List<Channel> SearchChannels(string team_id, string term)
-		//{
-		//	var obj = new { term = term };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/more/search", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<List<Channel>>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/create_direct", RequestType.POST)]
-		//public Channel CreateDirectChannel(string team_id, string user_id)
-		//{
-		//	var obj = new { user_id = user_id };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/create_direct", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/update_header", RequestType.POST)]
-		//public Channel UpdateChannelHeader(string team_id, string channel_id, string channel_header)
-		//{
-		//	var obj = new { channel_id = channel_id, channel_header = channel_header };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/update_header", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/update_purpose", RequestType.POST)]
-		//public Channel UpdateChannelPurpose(string team_id, string channel_id, string channel_purpose)
-		//{
-		//	var obj = new { channel_id = channel_id, channel_purpose = channel_purpose };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/update_purpose", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/update_notify_props", RequestType.POST)]
-		//public ChannelMember.ChannelNotifProps UpdateChannelNotifyProps(string team_id, string channel_id, string user_id, string mark_unread, string desktop)
-		//{
-		//	var obj = new { channel_id = channel_id, user_id = user_id, mark_unread = mark_unread, desktop = desktop };
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/update_notify_props", obj);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<ChannelMember.ChannelNotifProps>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/join", RequestType.POST)]
-		//public Channel JoinChannelByID(string team_id, string channel_id)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/{channel_id}/join", null);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/name/{channel_name}/join", RequestType.POST)]
-		//public Channel JoinChannelByName(string team_id, string channel_name)
-		//{
-		//	string rawdata = API.Post($"/teams/{team_id}/channels/name/{channel_name}/join", null);
-		//	if (!string.IsNullOrWhiteSpace(rawdata))
-		//		return JsonConvert.DeserializeObject<Channel>(rawdata);
-		//	else
-		//		return null;
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/leave", RequestType.POST)]
-		//public void LeaveChannel(string team_id, string channel_id)
-		//{
-		//	var obj = new { channel_id = channel_id };
-		//	API.Post($"/teams/{team_id}/channels/{channel_id}/leave", obj);
-		//}
-
-		//[ApiRoute("/teams/{team_id}/channels/{channel_id}/remove", RequestType.POST)]
-		//public void RemoveMemberFromChannel(string team_id, string channel_id, string user_id)
-		//{
-		//	var obj = new { user_id = user_id };
-		//	API.Post($"/teams/{team_id}/channels/{channel_id}/remove", obj);
-		//}
-		//#endregion
+		
 
 		//#region Post Methods
 
