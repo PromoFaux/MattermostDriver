@@ -31,6 +31,7 @@ namespace MattermostDriver
 		public event PostEditedEventHandler PostEdited;
 		public event ReactionChangedEventHandler ReactionAdded;
 		public event ReactionChangedEventHandler ReactionRemoved;
+		public event ChannelViewedEventHandler ChannelViewed;
 		#endregion
 
 		public Self Connect(string url, string username, string password, ILogger logger)
@@ -116,6 +117,11 @@ namespace MattermostDriver
 					ChannelDeletedEvent cdevent = JsonConvert.DeserializeObject<ChannelDeletedEvent>(rawdata);
 					logger.Debug("Channel deleted event received: " + cdevent.ToString());
 					ChannelDeleted?.Invoke(cdevent);
+					break;
+				case "channel_viewed":
+					ChannelViewedEvent cvevent = JsonConvert.DeserializeObject<ChannelViewedEvent>(rawdata);
+					logger.Debug("Channel viewed event received: " + cvevent.ToString());
+					ChannelViewed?.Invoke(cvevent);
 					break;
 				case "direct_added":
 					DirectAddedEvent daevent = JsonConvert.DeserializeObject<DirectAddedEvent>(rawdata);
@@ -996,6 +1002,105 @@ namespace MattermostDriver
 		{
 			var obj = new { id = id };
 			API.Post($"/teams/{team_id}/hooks/incoming/delete", obj);
+		}
+		#endregion
+
+		#region Admin Methods
+		[ApiRoute("/admin/logs", RequestType.GET)]
+		public List<string> GetLogs()
+		{
+			string rawdata = API.Get("/admin/logs");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<string>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/admin/audits", RequestType.GET)]
+		public List<Audit> GetAudits()
+		{
+			string rawdata = API.Get("/admin/audits");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Audit>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/admin/config", RequestType.GET)]
+		public Config GetConfig()
+		{
+			string rawdata = API.Get("/admin/config");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Config>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/admin/save_config", RequestType.POST)]
+		public void SaveConfig(Config config)
+		{
+			API.Post("/admin/save_config", config);
+		}
+
+		[ApiRoute("/admin/reload_config", RequestType.GET)]
+		public void ReloadConfig()
+		{
+			API.Get("/admin/reload_config");
+		}
+
+		[ApiRoute("/admin/invalidate_all_caches", RequestType.GET)]
+		public void InvalidateAllCaches()
+		{
+			API.Get("/admin/invalidate_all_caches");
+		}
+
+		[ApiRoute("/admin/recycle_db_conn", RequestType.GET)]
+		public void RecycleDBConn()
+		{
+			API.Get("/admin/recycle_db_conn");
+		}
+
+		[ApiRoute("/admin/analytics/{id}/{name}", RequestType.GET)]
+		public List<Analytic> GetAnalyticsByTeam(string team_id, string name)
+		{
+			string rawdata = API.Get($"/admin/analytics/{team_id}/{name}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Analytic>>(rawdata);
+			else
+				return null;
+		}
+		[ApiRoute("/admin/analytics/{name}", RequestType.GET)]
+		public List<Analytic> GetAnalytics(string name)
+		{
+			string rawdata = API.Get($"/admin/analytics/{name}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<List<Analytic>>(rawdata);
+			else
+				return null;
+		}
+
+		[ApiRoute("/admin/reset_mfa", RequestType.POST)]
+		public void ResetMFA(string user_id)
+		{
+			var obj = new { user_id = user_id };
+			API.Post("/admin/reset_mfa", obj);
+		}
+
+		[ApiRoute("/admin/reset_password", RequestType.POST)]
+		public void ResetPassword(string user_id, string new_password)
+		{
+			var obj = new { user_id = user_id, new_password = new_password };
+			API.Post("/admin/reset_password", obj);
+		}
+
+		[ApiRoute("/admin/recently_active_users/{team_id}", RequestType.GET)]
+		public Dictionary<string,User> GetRecentlyActiveUsers(string team_id)
+		{
+			string rawdata = API.Get($"/admin/recently_active_users/{team_id}");
+			if (!string.IsNullOrWhiteSpace(rawdata))
+				return JsonConvert.DeserializeObject<Dictionary<string, User>>(rawdata);
+			else
+				return null;
 		}
 		#endregion
 	}

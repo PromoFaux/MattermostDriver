@@ -19,6 +19,7 @@ namespace MattermostDriver
 	public delegate void PostDeletedEventHandler(PostDeletedEvent e);
 	public delegate void PostEditedEventHandler(PostEditedEvent e);
 	public delegate void ReactionChangedEventHandler(ReactionChangedEvent e);
+	public delegate void ChannelViewedEventHandler(ChannelViewedEvent e);
 
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class ApiRoute : Attribute

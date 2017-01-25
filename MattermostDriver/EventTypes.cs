@@ -383,4 +383,14 @@ namespace MattermostDriver
 			return $"Reaction Name: {data.reaction.emoji_name}";
 		}
 	}
+
+	public class ChannelViewedEvent : IResponse
+	{
+		public Data data;
+
+		public class Data
+		{
+			public string channel_id;
+		}
+	}
 }
