@@ -998,5 +998,132 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 		#endregion
+
+		#region Webhook Methods
+		[ApiRoute("/hooks/incoming", RequestType.POST)]
+		public void CreateIncomingWebhook()
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/incoming", RequestType.GET)]
+		public void GetIncomingWebhooks(int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+		}
+
+		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.PUT)]
+		public void UpdateIncomingWebhook(string hook_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.DELETE)]
+		public void DeleteIncomingWebhook(string hook_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/outgoing", RequestType.POST)]
+		public void CreateOutgoingWebhook()
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/outgoing", RequestType.GET)]
+		public void GetOutgoingWebhooks(int page, int per_page)
+		{
+			throw new NotImplementedException();
+			Dictionary<string, string> options = new Dictionary<string, string>
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+		}
+
+		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.PUT)]
+		public void UpdateOutgoingWebhook(string hook_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.DELETE)]
+		public void DeleteOutgoingWebhook(string hook_id)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/hooks/outgoing/{hook_id}/regen_token", RequestType.POST)]
+		public void RegenerateOutgoingWebhookToken(string hook_id)
+		{
+			throw new NotImplementedException();
+		}
+		#endregion
+
+		#region Status Methods
+		[ApiRoute("/users/status/ids", RequestType.POST)]
+		public void GetUserStatuses(List<string> ids)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/users/{user_id}/status", RequestType.GET)]
+		public void GetUserStatus(string user_id)
+		{
+			throw new NotImplementedException();
+		}
+		
+		[ApiRoute("/users/{user_id}/status", RequestType.PUT)]
+		public void UpdateUserStatus(string user_id)
+		{
+			throw new NotImplementedException();
+		}
+		#endregion
+
+		//Not implemented
+		//[ApiRoute("/emoji", RequestType.POST)]
+		//[ApiRoute("/emoji", RequestType.GET)]
+		//[ApiRoute("/emoji/{emoji_id}/image", RequestType.GET)]
+		//[ApiRoute("/emoji/{emoji_id}", RequestType.DELETE)]
+
+		#region Reaction Methods
+		[ApiRoute("/reactions", RequestType.POST)]
+		public void CreateReaction()
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/users/{user_id}/posts/{post_id}/reactions/{name}", RequestType.DELETE)]
+		public void DeleteReaction(string user_id, string post_id, string name)
+		{
+			throw new NotImplementedException();
+		}
+
+		[ApiRoute("/posts/{post_id}/reactions", RequestType.GET)]
+		public void GetReactions(string post_id)
+		{
+			throw new NotImplementedException();
+		}
+		#endregion
+
+		//Not implemented
+		//[ApiRoute("/oauth/apps", RequestType.POST)]
+		//[ApiRoute("/oauth/apps", RequestType.GET)]
+		//[ApiRoute("/oauth/apps/{client_id}", RequestType.GET)]
+		//[ApiRoute("/oauth/apps/{client_id}", RequestType.DELETE)]
+		//[ApiRoute("/oauth/apps/{client_id}/regen_secret", RequestType.POST)]
+		//[ApiRoute("/users/{user_id}/oauth/apps/{client_id}/authorize", RequestType.POST)]
+		//[ApiRoute("/users/{user_id}/oauth/apps/authorized", RequestType.GET)]
+		//[ApiRoute("/users/{user_id}/oauth/apps/{client_id}/deauthorize", RequestType.POST)]
+		//Use Connect() instead: [ApiRoute("/websocket"), RequestType.GET)]
+		//[ApiRoute("/webrtc/token", RequestType.GET)]
+		//[ApiRoute("/license", RequestType.POST)]
+		//[ApiRoute("/license", RequestType.DELETE)]
+		//[ApiRoute("/license/settings", RequestType.GET)]
 	}
 }
