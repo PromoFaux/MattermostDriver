@@ -82,7 +82,7 @@ namespace MattermostDriver
 			logger.Debug("Websocket-open event thrown. Sending authentication challenge.");
 
 			//Authenticate over Websocket
-			var request = new { seq = seq, action = "authentication_challenge", data = new { token = API.token } };
+			var request = new { seq = ++seq, action = "authentication_challenge", data = new { token = API.token } };
 			awaiting_ok = true;
 			socket.Send(JsonConvert.SerializeObject(request));
 		}
@@ -94,12 +94,15 @@ namespace MattermostDriver
 			//Specially handle Auth 'OK' message
 			if (awaiting_ok)
 			{
-				var res = JsonConvert.DeserializeAnonymousType(rawdata, new { status = "", seq_reply = "" });
+				var res = JsonConvert.DeserializeAnonymousType(rawdata, new { status = "", seq_reply = 0 });
 
 				if (res.status != "OK")
 					logger.Warn("OK not received via websocket. Full message: " + rawdata);
-				else
+				else if (res.seq_reply == 2)
 					logger.Debug("Authentication challenge successful. Awaiting hello event.");
+				else
+					logger.Debug($"[{res.seq_reply.ToString()}] Reply OK.");
+
 				awaiting_ok = false;
 				return;
 			}
@@ -221,13 +224,20 @@ namespace MattermostDriver
 		{
 			logger.Warn("Websocket closed.");
 		}
+
+		public void SendUserTyping(string channel_id, string parent_id = "")
+		{
+			var request = new { seq = ++seq, action = "user_typing", data = new { channel_id = channel_id, parent_id = parent_id } };
+			awaiting_ok = true;
+			socket.Send(JsonConvert.SerializeObject(request));
+		}
 		#endregion
 
 		#region User Methods
+		//TODO: add hash/inviteID options?
 		[ApiRoute("/users", RequestType.POST)]
 		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
 		{
-			throw new NotImplementedException();
 			var obj = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
 			return API.Post<User>($"/users", obj);
 		}
@@ -235,7 +245,6 @@ namespace MattermostDriver
 		[ApiRoute("/users/{user_id}", RequestType.PUT)]
 		public User UpdateUser(User user)
 		{
-			throw new NotImplementedException();
 			return API.Put<User>($"/users/{user.id}", user);
 		}
 
@@ -307,7 +316,6 @@ namespace MattermostDriver
 		[ApiRoute("/users/{user_id}", RequestType.GET)]
 		public User GetUserByID(string user_id)
 		{
-			throw new NotImplementedException();
 			return API.Get<User>($"/users/{user_id}");
 		}
 
@@ -373,17 +381,15 @@ namespace MattermostDriver
 		// [ApiRoute("/users/{user_id}/image"), RequestType.GET)]
 
 		[ApiRoute("/users/login", RequestType.POST)]
-		public Self Login(string login_id, string password, string token = "", string device_id = "")
+		public Self Login(string login_id, string password, string mfaToken = "", string device_id = "", bool ldap_only = false)
 		{
-			throw new NotImplementedException();
-			var obj = new { login_id = login_id, password = password, token = token, device_id = device_id };
+			var obj = new { login_id = login_id, password = password, token = mfaToken, device_id = device_id, ldap_only = ldap_only };
 			return API.PostGetAuth(obj);
 		}
 
 		[ApiRoute("/users/logout", RequestType.POST)]
 		public void Logout()
 		{
-			throw new NotImplementedException();
 			API.Post<string>($"/users/logout", null);
 		}
 
