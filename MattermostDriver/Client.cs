@@ -255,19 +255,10 @@ namespace MattermostDriver
 		}
 
 		[ApiRoute("/users/{user_id}/roles", RequestType.PUT)]
-		public void UpdateUserRoles(string user_id, string new_roles, string team_id = "")
+		public void UpdateUserRoles(string user_id, string roles)
 		{
-			throw new NotImplementedException();
-			if (!string.IsNullOrWhiteSpace(team_id))
-			{
-				var obj = new { user_id = user_id, team_id = team_id, new_roles = new_roles };
-				API.Put<string>($"/users/{user_id}/roles", obj);
-			}
-			else
-			{
-				var obj = new { user_id = user_id, new_roles = new_roles };
-				API.Put<string>($"/users/{user_id}/roles", obj);
-			}
+			var obj = new { user_id = user_id, roles = roles };
+			API.Put<string>($"/users/{user_id}/roles", obj);
 		}
 
 		[ApiRoute("/users/{user_id}/password", RequestType.PUT)]
@@ -451,12 +442,16 @@ namespace MattermostDriver
 
 		#region Team Methods
 		[ApiRoute("/teams", RequestType.POST)]
-		public Team CreateTeam(string name, string display_name, string type)
-		{
-			throw new NotImplementedException();
-			var obj = new { name = name, display_name = display_name, type = type };
-			return API.Post<Team>($"/teams", obj);
-		}
+        public Team CreateTeam(Team team)
+        {
+            return API.Post<Team>($"/teams", team);
+        }
+		//public Team CreateTeam(string name, string display_name, string type)
+		//{
+		//	throw new NotImplementedException();
+		//	var obj = new { name = name, display_name = display_name, type = type };
+		//	return API.Post<Team>($"/teams", obj);
+		//}
 
 		[ApiRoute("/teams", RequestType.GET)]
 		public List<Team> GetTeams(int page, int per_page)
@@ -571,9 +566,8 @@ namespace MattermostDriver
 		[ApiRoute("/channels", RequestType.POST)]
 		public Channel CreateChannel(string team_id, string name, string display_name, string type, string purpose = "", string header = "")
 		{
-			throw new NotImplementedException();
 			var obj = new { team_id = team_id, name = name, display_name = display_name, type = type, purpose = purpose, header = header };
-			return API.Post<Channel>($"/teams/{team_id}/channels/create", obj);
+			return API.Post<Channel>($"/channels", obj);
 		}
 
 		[ApiRoute("/teams/{team_id}/channels", RequestType.GET)]
