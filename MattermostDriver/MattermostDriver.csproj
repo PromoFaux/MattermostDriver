@@ -52,7 +52,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="EventTypes.cs" />
     <Compile Include="ILogger.cs" />
