@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26020.0
+VisualStudioVersion = 15.0.26127.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MattermostDriver", "MattermostDriver\MattermostDriver.csproj", "{4B1071A6-598D-46C9-88DE-1A4DA818500F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverTesting", "DriverTesting\DriverTesting.csproj", "{ED1D62B4-D99F-40DF-89AC-B09E9023905D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{4B1071A6-598D-46C9-88DE-1A4DA818500F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4B1071A6-598D-46C9-88DE-1A4DA818500F}.Release|x86.ActiveCfg = Release|Any CPU
 		{4B1071A6-598D-46C9-88DE-1A4DA818500F}.Release|x86.Build.0 = Release|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Debug|x86.Build.0 = Debug|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Release|x86.ActiveCfg = Release|Any CPU
+		{ED1D62B4-D99F-40DF-89AC-B09E9023905D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
