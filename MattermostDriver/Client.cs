@@ -2,6 +2,7 @@
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using WebSocket4Net;
 
 namespace MattermostDriver
@@ -13,6 +14,7 @@ namespace MattermostDriver
 		private int seq { get; set; }
 		private bool awaiting_ok { get; set; }
 		private string ApiBase { get; set; }
+		private string WebsocketUrl { get; set; }
 		private RestClient client { get; set; }
 		private string token { get; set; }
 
@@ -38,6 +40,37 @@ namespace MattermostDriver
 		public event ChannelViewedEventHandler ChannelViewed;
 		#endregion
 
+		public Client(string url, ILogger logger)
+		{
+			//Setup logging
+			this.logger = logger;
+
+			//Remove last '/' for consistency
+			if (url.EndsWith("/"))
+				url = url.TrimEnd('/');
+
+			//Generate API base url
+			ApiBase = url + "/api/v4";
+
+			//Generate websocket url
+			if (url.StartsWith("https"))
+				WebsocketUrl = "wss" + url.Substring(5) + "/api/v4/users/websocket";
+			else if (url.StartsWith("http"))
+				WebsocketUrl = "ws" + url.Substring(4) + "/api/v4/users/websocket";
+			else
+			{
+				logger.Error($"Invalid server URL in Client.ctor(): {url}");
+				throw new Exception("Invalid server URL.");
+			}
+			socket = new WebSocket(WebsocketUrl);
+			socket.Opened += OnWebsocketOpen;
+			socket.MessageReceived += OnWebsocketMessage;
+			socket.Closed += OnWebsocketClose;
+
+			//Setup REST client
+			client = new RestClient(ApiBase);
+		}
+
 		#region API
 		private Self APIPostGetAuth(object jsonbody)
 		{
@@ -51,7 +84,7 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.message != null)
+				if (error.status_code != 0)
 				{
 					logger.Error("Error received from API: " + error.ToString());
 					return null;
@@ -59,22 +92,19 @@ namespace MattermostDriver
 			}
 			catch { }
 
+			logger.Debug($"Result: " + result.Content);
+
 			token = result.Headers[1].Value.ToString();
+
 			return JsonConvert.DeserializeObject<Self>(result.Content);
 		}
 
 		private T APIPost<T>(string endpoint, object jsonbody)
 		{
-			//Make sure client is logged in.
-			if (string.IsNullOrWhiteSpace(token))
-			{
-				logger.Error($"Post called at endpoint '{endpoint}', but not logged in.");
-				return default(T);
-			}
-
 			RestRequest request = new RestRequest(endpoint, Method.POST);
 			request.AddHeader("Content-Type", "application/json");
-			request.AddHeader("Authorization", "Bearer " + token);
+			if (!string.IsNullOrWhiteSpace(token))
+				request.AddHeader("Authorization", "Bearer " + token);
 			if (jsonbody != null)
 				request.AddJsonBody(jsonbody);
 			var result = client.Execute(request);
@@ -84,7 +114,7 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.message != null)
+				if (error.status_code != 0)
 				{
 					logger.Error("Error received from API: " + error.ToString());
 					return default(T);
@@ -107,15 +137,9 @@ namespace MattermostDriver
 
 		private T APIGet<T>(string endpoint, Dictionary<string, string> parameters = null)
 		{
-			//Make sure client is logged in.
-			if (string.IsNullOrWhiteSpace(token))
-			{
-				logger.Error($"Get called at endpoint '{endpoint}', but not logged in.");
-				return default(T);
-			}
-
 			RestRequest request = new RestRequest(endpoint, Method.GET);
-			request.AddHeader("Authorization", "Bearer " + token);
+			if (!string.IsNullOrWhiteSpace(token))
+				request.AddHeader("Authorization", "Bearer " + token);
 			if (parameters != null)
 			{
 				foreach (KeyValuePair<string, string> kvp in parameters)
@@ -130,7 +154,7 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.message != null)
+				if (error.status_code != 0)
 				{
 					logger.Error("Error received from API: " + error.ToString());
 					return default(T);
@@ -153,17 +177,11 @@ namespace MattermostDriver
 
 		private T APIPut<T>(string endpoint, object jsonbody)
 		{
-			//Make sure client is logged in.
-			if (string.IsNullOrWhiteSpace(token))
-			{
-				logger.Error($"Put called at endpoint '{endpoint}', but not logged in.");
-				return default(T);
-			}
-
 			RestRequest request = new RestRequest(endpoint, Method.PUT);
 
 			request.AddHeader("Content-Type", "application/json");
-			request.AddHeader("Authorization", "Bearer " + token);
+			if (!string.IsNullOrWhiteSpace(token))
+				request.AddHeader("Authorization", "Bearer " + token);
 			if (jsonbody != null)
 				request.AddJsonBody(jsonbody);
 			var result = client.Execute(request);
@@ -173,7 +191,7 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.message != null)
+				if (error.status_code != 0)
 				{
 					logger.Error("Error received from API: " + error.ToString());
 					return default(T);
@@ -196,17 +214,11 @@ namespace MattermostDriver
 
 		private void APIDelete(string endpoint)
 		{
-			//Make sure client is logged in.
-			if (string.IsNullOrWhiteSpace(token))
-			{
-				logger.Error($"Delete called at endpoint '{endpoint}', but not logged in.");
-				return;
-			}
-
 			RestRequest request = new RestRequest(endpoint, Method.DELETE);
 
 			request.AddHeader("Content-Type", "application/json");
-			request.AddHeader("Authorization", "Bearer " + token);
+			if (!string.IsNullOrWhiteSpace(token))
+				request.AddHeader("Authorization", "Bearer " + token);
 			var result = client.Execute(request);
 
 			logger.Debug($"Executed Delete at endpoint '{endpoint}'.");
@@ -214,7 +226,7 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.message != null)
+				if (error.status_code != 0)
 				{
 					logger.Error("Error received from API: " + error.ToString());
 					return;
@@ -228,45 +240,20 @@ namespace MattermostDriver
 		}
 		#endregion
 
-		public Self Connect(string url, string username, string password, ILogger logger)
+		public void Connect()
 		{
-			//Setup logging
-			this.logger = logger;
-
-			string websocket;
-
-			//Remove last '/' for consistency
-			if (url.EndsWith("/"))
-				url = url.TrimEnd('/');
-
-			//Generate API base url
-			ApiBase = url + "/api/v4";
-
-			//Generate websocket url
-			if (url.StartsWith("https"))
-				websocket = "wss" + url.Substring(5) + "/api/v4/users/websocket";
-			else if (url.StartsWith("http"))
-				websocket = "ws" + url.Substring(4) + "/api/v4/users/websocket";
-			else
+			if (socket.State == WebSocketState.Open)
 			{
-				logger.Error($"Invalid server URL in Client.Connect(): {url}");
-				throw new Exception("Invalid server URL.");
+				logger.Error("Cannot connect to websocket while a connection is already made!");
+				return;
 			}
-
-			client = new RestClient(ApiBase);
-
-			//Login and receive Session Token
-			Self self = APIPostGetAuth(new { login_id = username, password = password });
-
-			//Connect to Websocket
-			socket = new WebSocket(websocket);
-			socket.Opened += OnWebsocketOpen;
-			socket.MessageReceived += OnWebsocketMessage;
-			socket.Closed += OnWebsocketClose;
+			if (string.IsNullOrWhiteSpace(token))
+			{
+				logger.Error("Cannot connect to websocket without authenticating!");
+				return;
+			}
 			socket.Open();
 			seq = 1;
-
-			return self;
 		}
 
 		#region Websocket Handlers
@@ -428,6 +415,7 @@ namespace MattermostDriver
 		#endregion
 
 		#region User Methods
+		// CreateUser creates a user in the system based on the provided user struct.
 		//TODO: add hash/inviteID options?
 		[ApiRoute("/users", RequestType.POST)]
 		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
@@ -436,6 +424,7 @@ namespace MattermostDriver
 			return APIPost<User>($"/users", obj);
 		}
 
+		// UpdateUser updates a user in the system based on the provided user struct.
 		[ApiRoute("/users/{user_id}", RequestType.PUT)]
 		public User UpdateUser(User user)
 		{
@@ -448,34 +437,40 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 
+		// UpdateUserRoles updates a user's roles in the system. A user can have "system_user" and "system_admin" roles.
 		[ApiRoute("/users/{user_id}/roles", RequestType.PUT)]
 		public void UpdateUserRoles(string user_id, string roles)
 		{
 			var obj = new { user_id = user_id, roles = roles };
-			APIPut<string>($"/users/{user_id}/roles", obj);
+			APIPut<StatusOK>($"/users/{user_id}/roles", obj);
 		}
 
+		// UpdateUserPassword updates a user's password. Must be logged in as the user or be a system administrator.
 		[ApiRoute("/users/{user_id}/password", RequestType.PUT)]
 		public void UpdatePassword(string user_id, string new_password, string current_password = "")
 		{
 			var obj = new { user_id = user_id, current_password = current_password, new_password = new_password };
-			APIPut<string>($"/users/{user_id}/password", obj);
+			APIPut<StatusOK>($"/users/{user_id}/password", obj);
 		}
 
+		// ResetPassword uses a recovery code to update reset a user's password.
 		[ApiRoute("/users/{user_id}/password/reset", RequestType.POST)]
 		public void ResetMyPassword(string user_id, string new_password, string code)
 		{
 			var obj = new { new_password = new_password, code = code };
-			APIPost<string>($"/users/{user_id}/password/reset", obj);
+			APIPost<StatusOK>($"/users/{user_id}/password/reset", obj);
 		}
 
+		// SendPasswordResetEmail will send a link for password resetting to a user with the
+		// provided email.
 		[ApiRoute("/users/{user_id}/password/reset/send", RequestType.POST)]
 		public void SendResetPassword(string user_id, string email)
 		{
 			var obj = new { email = email };
-			APIPost<string>($"/users/{user_id}/password/reset/send", obj);
+			APIPost<StatusOK>($"/users/{user_id}/password/reset/send", obj);
 		}
 
+		// GetUsers returns a page of users on the system. Page counting starts at 0.
 		[ApiRoute("/users", RequestType.GET)]
 		public List<User> GetUsers(int page, int per_page, string in_team = "", string in_channel = "", string not_in_channel = "")
 		{
@@ -495,28 +490,32 @@ namespace MattermostDriver
 			return APIGet<List<User>>("/users", options);
 		}
 
+		// GetUser returns a user based on the provided user id string.
 		[ApiRoute("/users/{user_id}", RequestType.GET)]
-		public User GetUserByID(string user_id)
+		public User GetUser(string user_id)
 		{
 			return APIGet<User>($"/users/{user_id}");
 		}
 
+		// GetUserByUsername returns a user based on the provided user name string.
 		[ApiRoute("/users/username/{username}", RequestType.GET)]
-		public User GetUserByName(string username)
+		public User GetUserByUsername(string username)
 		{
 			return APIGet<User>($"/users/username/{username}");
 		}
 
+		// GetUserByEmail returns a user based on the provided user email string.
 		[ApiRoute("/users/email/{email}", RequestType.GET)]
 		public User GetUserByEmail(string email)
 		{
 			return APIGet<User>($"/users/email/{email}");
 		}
 
+		// GetUsersByIds returns a list of users based on the provided user ids.
 		[ApiRoute("/users/ids", RequestType.POST)]
-		public Dictionary<string, User> GetUsersByIDs(List<string> ids)
+		public List<User> GetUsersByIDs(List<string> ids)
 		{
-			return APIPost<Dictionary<string, User>>($"/users/ids", ids);
+			return APIPost<List<User>>($"/users/ids", ids);
 		}
 
 		[ApiRoute("/users/search", RequestType.POST)]
@@ -559,17 +558,47 @@ namespace MattermostDriver
 		// [ApiRoute("/users/{user_id}/image"), RequestType.POST)]
 		// [ApiRoute("/users/{user_id}/image"), RequestType.GET)]
 
+		// Login authenticates a user by login id, which can be username, email or some sort
+		// of SSO identifier based on server configuration, and a password.
 		[ApiRoute("/users/login", RequestType.POST)]
-		public Self Login(string login_id, string password, string mfaToken = "", string device_id = "", bool ldap_only = false)
+		public Self Login(string login_id, string password)
 		{
-			var obj = new { login_id = login_id, password = password, token = mfaToken, device_id = device_id, ldap_only = ldap_only };
+			var obj = new { login_id = login_id, password = password};
 			return APIPostGetAuth(obj);
 		}
 
+		// LoginById authenticates a user by user id and password.
+		[ApiRoute("/users/login", RequestType.POST)]
+		public Self LoginByID(string id, string password)
+		{
+			var obj = new { id = id, password = password };
+			return APIPostGetAuth(obj);
+		}
+
+		// LoginByLdap authenticates a user by LDAP id and password.
+		[ApiRoute("/users/login", RequestType.POST)]
+		public Self LoginByLdap(string login_id, string password)
+		{
+			var obj = new { login_id = login_id, password = password, ldap_only = true };
+			return APIPostGetAuth(obj);
+		}
+
+		// LoginWithDevice authenticates a user by login id (username, email or some sort
+		// of SSO identifier based on configuration), password and attaches a device id to
+		// the session.
+		[ApiRoute("/users/login", RequestType.POST)]
+		public Self LoginWithDevice(string login_id, string password, string device_id = "")
+		{
+			var obj = new { login_id = login_id, password = password, device_id = device_id};
+			return APIPostGetAuth(obj);
+		}
+
+		// Logout terminates the current user's session.
 		[ApiRoute("/users/logout", RequestType.POST)]
 		public void Logout()
 		{
-			APIPost<string>($"/users/logout", null);
+			token = "";
+			APIPost<StatusOK>($"/users/logout", null);
 		}
 
 		[ApiRoute("/users/login/switch", RequestType.POST)]
@@ -621,14 +650,16 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 
-		[ApiRoute("/users/{user_id}/delete", RequestType.DELETE)]
+		// DeleteUser deactivates a user in the system based on the provided user id string.
+		[ApiRoute("/users/{user_id}", RequestType.DELETE)]
 		public void DeleteUser(string user_id)
 		{
-			APIDelete($"/users/{user_id}/delete");
+			APIDelete($"/users/{user_id}");
 		}
 		#endregion
 
 		#region Team Methods
+		// CreateTeam creates a team in the system based on the provided team struct.
 		[ApiRoute("/teams", RequestType.POST)]
         public Team CreateTeam(Team team)
         {
@@ -654,10 +685,12 @@ namespace MattermostDriver
 			return APIGet<List<Team>>("/teams", options);
 		}
 
+		// GetTeamsForUser returns a list of teams a user is on. Must be logged in as the user
+		// or be a system administrator.
 		[ApiRoute("/users/{user_id}/teams", RequestType.GET)]
 		public List<Team> GetTeamsForUser(string user_id)
 		{
-			return APIGet<List<Team>>("/users/{user_id}/teams");
+			return APIGet<List<Team>>($"/users/{user_id}/teams");
 		}
 
 		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
@@ -673,8 +706,9 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 
+		// GetTeam returns a team based on the provided team id string.
 		[ApiRoute("/teams/{team_id}", RequestType.GET)]
-		public Team GetTeamByID(string team_id)
+		public Team GetTeam(string team_id)
 		{
 			return APIGet<Team>($"/teams/{team_id}");
 		}
@@ -718,6 +752,7 @@ namespace MattermostDriver
 			return APIGet<TeamStats>($"/teams/{team_id}/stats");
 		}
 
+		// GetTeamMember returns a team member based on the provided team and user id strings.
 		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
 		public TeamMember GetTeamMember(string team_id, string user_id)
 		{
@@ -755,7 +790,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
-			APIPost<string>($"/teams/{team_id}/members/{user_id}/roles", obj);
+			APIPost<StatusOK>($"/teams/{team_id}/members/{user_id}/roles", obj);
 		}
 
 		[ApiRoute("/teams/name/{name}/exists", RequestType.GET)]
@@ -769,13 +804,15 @@ namespace MattermostDriver
 		#endregion
 
 		#region Channel Methods
+		// CreateChannel creates a channel based on the provided channel struct.
 		[ApiRoute("/channels", RequestType.POST)]
-		public Channel CreateChannel(string team_id, string name, string display_name, string type, string purpose = "", string header = "")
+		public Channel CreateChannel(Channel channel)
 		{
-			var obj = new { team_id = team_id, name = name, display_name = display_name, type = type, purpose = purpose, header = header };
-			return APIPost<Channel>($"/channels", obj);
+			return APIPost<Channel>($"/channels", channel);
 		}
 
+		// CreateDirectChannel creates a direct message channel based on the two user
+		// ids provided.
 		[ApiRoute("/channels/direct", RequestType.POST)]
 		public Channel CreateDirectChannel(string userOne, string userTwo)
 		{
@@ -796,25 +833,25 @@ namespace MattermostDriver
 			return APIGet<List<Channel>>($"/teams/{team_id}/channels", options);
 		}
 
+		// GetChannel returns a channel based on the provided channel id string.
 		[ApiRoute("/channels/{channel_id}", RequestType.GET)]
-		public ChannelInfo GetChannelByID(string channel_id)
+		public Channel GetChannel(string channel_id)
 		{
-			throw new NotImplementedException();
-			return APIGet<ChannelInfo>($"/channels/{channel_id}");
+			return APIGet<Channel>($"/channels/{channel_id}");
 		}
 
-		[ApiRoute("/teams/{team_id}/channels/name/{name}", RequestType.GET)]
-		public ChannelInfo GetChannelByNameWithTeamID(string team_id, string name)
+		// GetChannelByName returns a channel based on the provided channel name and team id strings.
+		[ApiRoute("/teams/{team_id}/channels/name/{channel_name}", RequestType.GET)]
+		public Channel GetChannelByName(string team_id, string channel_name)
 		{
-			throw new NotImplementedException();
-			return APIGet<ChannelInfo>($"/teams/{team_id}/channels/name/{name}");
+			return APIGet<Channel>($"/teams/{team_id}/channels/name/{channel_name}");
 		}
 
+		// GetChannelByNameForTeamName returns a channel based on the provided channel name and team name strings.
 		[ApiRoute("/teams/name/{team_name}/channels/name/{channel_name}", RequestType.GET)]
-		public ChannelInfo GetChannelByNameWithTeamName(string team_name, string channel_name)
+		public Channel GetChannelByNameForTeamName(string team_name, string channel_name)
 		{
-			throw new NotImplementedException();
-			return APIGet<ChannelInfo>($"/teams/name/{team_name}/channels/name/{channel_name}");
+			return APIGet<Channel>($"/teams/name/{team_name}/channels/name/{channel_name}");
 		}
 
 		[ApiRoute("/channels/ids", RequestType.POST)]
@@ -856,12 +893,14 @@ namespace MattermostDriver
 			return APIGet<ChannelStats>($"/channels/{channel_id}/stats");
 		}
 
+		// GetChannelMember gets a channel member.
 		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.GET)]
 		public ChannelMember GetChannelMember(string channel_id, string user_id)
 		{
 			return APIGet<ChannelMember>($"/channels/{channel_id}/members/{user_id}");
 		}
 
+		// GetChannelMembers gets a page of channel members.
 		[ApiRoute("/channels/{channel_id}/members", RequestType.GET)]
 		public List<ChannelMember> GetChannelMembers(string channel_id, int page, int per_page)
 		{
@@ -874,6 +913,7 @@ namespace MattermostDriver
 			return APIGet<List<ChannelMember>>($"/channels/{channel_id}/members", options);
 		}
 
+		// GetChannelMembersForUser gets all the channel members for a user on a team.
 		[ApiRoute("/users/{user_id}/teams/{team_id}/channels/members", RequestType.GET)]
 		public List<ChannelMember> GetChannelMembersForUser(string user_id, string team_id)
 		{
@@ -904,7 +944,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { channel_id = channel_id, prev_channel_id = prev_channel_id };
-			APIPost<string>($"/channels/{channel_id}/members/{user_id}/view", obj);
+			APIPost<StatusOK>($"/channels/{channel_id}/members/{user_id}/view", obj);
 		}
 
 		[ApiRoute("/channels/{channel_id}/members/{user_id}/roles", RequestType.PUT)]
@@ -912,7 +952,7 @@ namespace MattermostDriver
 		{
 			throw new NotImplementedException();
 			var obj = new { user_id = user_id, new_roles = new_roles };
-			APIPut<string>($"/channels/{channel_id}/members/{user_id}/roles", obj);
+			APIPut<StatusOK>($"/channels/{channel_id}/members/{user_id}/roles", obj);
 		}
 
 		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.DELETE)]
@@ -923,11 +963,11 @@ namespace MattermostDriver
 		#endregion
 
 		#region Post Methods
+		// CreatePost creates a post based on the provided post struct.
 		[ApiRoute("/posts", RequestType.POST)]
 		public Post CreatePost(Post newPost)
 		{
-			throw new NotImplementedException();
-			return APIPost<Post>($"/posts/", newPost);
+			return APIPost<Post>($"/posts", newPost);
 		}
 
 		[ApiRoute("/posts/{post_id}", RequestType.PUT)]
@@ -943,21 +983,22 @@ namespace MattermostDriver
 			throw new NotImplementedException();
 		}
 
+		// GetPostsForChannel gets a page of posts with an array for ordering for a channel.
 		[ApiRoute("/channels/{channel_id}/posts", RequestType.GET)]
-		public List<Post> GetPosts(int page, int per_page, long since = 0, string before = "", string after = "")
+		public SearchResult GetPosts(string channel_id, int page, int per_page)//, long since = 0, string before = "", string after = "")
 		{
-			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>()
 			{
 				{ "page", page.ToString() },
 				{ "per_page", per_page.ToString() }
 			};
-			if (since != 0)
-				options.Add("since", since.ToString());
-			if (!string.IsNullOrWhiteSpace(before))
-				options.Add("before", before);
-			if (!string.IsNullOrWhiteSpace(after))
-				options.Add("after", after);
+			//if (since != 0)
+			//	options.Add("since", since.ToString());
+			//if (!string.IsNullOrWhiteSpace(before))
+			//	options.Add("before", before);
+			//if (!string.IsNullOrWhiteSpace(after))
+			//	options.Add("after", after);
+			return APIGet<SearchResult>($"/channels/{channel_id}/posts");
 		}
 
 		[ApiRoute("/posts/{post_id}", RequestType.DELETE)]
@@ -994,10 +1035,18 @@ namespace MattermostDriver
 		//Not implemented
 		//[ApiRoute("/posts/{post_id}/files/info", RequestType.GET)]
 
+		// GetPost gets a single post.
 		[ApiRoute("/posts/{post_id}", RequestType.GET)]
-		public SearchResult GetPost(string post_id)
+		public Post GetPost(string post_id)
 		{
-			throw new NotImplementedException();
+			return APIGet<Post>($"/posts/{post_id}");
+		}
+
+		// GetPostThread gets a post with all the other posts in the same thread.
+		[ApiRoute("/posts/{post_id}/thread", RequestType.GET)]
+		public SearchResult GetPostThread(string post_id)
+		{
+			return APIGet<SearchResult>($"/posts/{post_id}/thread");
 		}
 		#endregion
 
@@ -1014,7 +1063,7 @@ namespace MattermostDriver
 		public void UpdatePreferences(string user_id, List<Preference> preferences)
 		{
 			throw new NotImplementedException();
-			APIPost<string>($"/users/{user_id}/preferences/save", preferences);
+			APIPost<StatusOK>($"/users/{user_id}/preferences/save", preferences);
 		}
 
 		[ApiRoute("/users/{user_id}/preferences", RequestType.GET)]
@@ -1055,21 +1104,21 @@ namespace MattermostDriver
 		public void GetConfig()
 		{
 			throw new NotImplementedException();
-			APIGet<string>("/system/client/config");
+			APIGet<StatusOK>("/system/client/config");
 		}
 
 		[ApiRoute("/system/log", RequestType.POST)]
 		public void CreateSystemLogEntry(string log)
 		{
 			throw new NotImplementedException();
-			APIPost<string>("/system/log", null);
+			APIPost<StatusOK>("/system/log", null);
 		}
 
 		[ApiRoute("/system/ping", RequestType.GET)]
 		public void Ping()
 		{
 			throw new NotImplementedException();
-			APIGet<string>("/system/ping");
+			APIGet<StatusOK>("/system/ping");
 		}
 		#endregion
 
@@ -1116,14 +1165,14 @@ namespace MattermostDriver
 		public void ReloadConfig()
 		{
 			throw new NotImplementedException();
-			APIPost<string>("/admin/config/reload", null);
+			APIPost<StatusOK>("/admin/config/reload", null);
 		}
 
 		[ApiRoute("/admin/caches/invalidate", RequestType.GET)]
 		public void InvalidateCaches()
 		{
 			throw new NotImplementedException();
-			APIGet<string>("/admin/caches/invalidate");
+			APIGet<StatusOK>("/admin/caches/invalidate");
 		}
 
 		//Not implemented
@@ -1133,7 +1182,7 @@ namespace MattermostDriver
 		public void RecycleDBConn()
 		{
 			throw new NotImplementedException();
-			APIPost<string>("/admin/database/recycle", null);
+			APIPost<StatusOK>("/admin/database/recycle", null);
 		}
 
 		[ApiRoute("/admin/analytics/{type}", RequestType.GET)]

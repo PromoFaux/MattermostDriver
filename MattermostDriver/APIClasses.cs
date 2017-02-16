@@ -2,14 +2,20 @@
 
 namespace MattermostDriver
 {
+	public class StatusOK
+	{
+		public string status;
+	}
+
 	public class Self : User
 	{
 		public bool email_verified;
 		public bool allow_marketing;
-		public UserNotifProps notify_props;
+		public NotificationProperties notify_props;
 		public long last_password_update;
+		public long last_picture_update;
 
-		public class UserNotifProps
+		public class NotificationProperties
 		{
 			public string channel;
 			public string comments;
@@ -202,10 +208,10 @@ namespace MattermostDriver
 		public long last_viewed_at;
 		public int msg_count;
 		public int mention_count;
-		public ChannelNotifProps notify_props;
+		public NotificationProperties notify_props;
 		public long last_update_at;
 
-		public class ChannelNotifProps
+		public class NotificationProperties
 		{
 			public string desktop;
 			public string mark_unread;
