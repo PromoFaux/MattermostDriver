@@ -431,10 +431,12 @@ namespace MattermostDriver
 			return APIPut<User>($"/users/{user.id}", user);
 		}
 
+		// PatchUser partially updates a user in the system. Any missing fields are not updated.
 		[ApiRoute("/users/{user_id}/patch", RequestType.PUT)]
-		public User UpdateUser(string user_id)
+		public User UpdateUser(string user_id, string username = "", string nickname = "", string first_name = "", string last_name = "", string position = "", string email = "", string locale = "")
 		{
-			throw new NotImplementedException();
+			var obj = new { username = username, nickname = nickname, first_name = first_name, last_name = last_name, position = position, email = email, locale = locale };
+			return APIPut<User>($"/users/{user_id}/patch", obj);
 		}
 
 		// UpdateUserRoles updates a user's roles in the system. A user can have "system_user" and "system_admin" roles.
