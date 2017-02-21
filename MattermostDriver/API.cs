@@ -19,7 +19,7 @@ namespace MattermostDriver
 			client = new RestClient(ApiBase);
 		}
 
-		internal static string PostGetAuth(object jsonbody)
+		internal static Self PostGetAuth(object jsonbody)
 		{
 			RestRequest request = new RestRequest("/users/login", Method.POST);
 			request.AddHeader("Content-Type", "application/json");
@@ -31,25 +31,26 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.status_code != null)
+				if (error.id != null && error.message != null)
 				{
 					Client.logger.Error("Error received from API: " + error.ToString());
-					throw new Exception("Error received from API Authorization request: " + error.ToString());
+					return null;
+					//throw new Exception("Error received from API Authorization request: " + error.ToString());
 				}
 			}
 			catch { }
 
 			token = result.Headers[1].Value.ToString();
-			return result.Content;
+			return JsonConvert.DeserializeObject<Self>(result.Content);
 		}
 
-		internal static string Post(string endpoint, object jsonbody)
+		internal static T Post<T>(string endpoint, object jsonbody)
 		{
 			//Make sure client is logged in.
 			if (string.IsNullOrWhiteSpace(token))
 			{
 				Client.logger.Error($"API.Post called at endpoint '{endpoint}', but not logged in.");
-				return "";
+				return default(T);
 			}
 
 			RestRequest request = new RestRequest(endpoint, Method.POST);
@@ -64,26 +65,34 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.status_code != null)
+				if (error.id != null && error.message != null)
 				{
 					Client.logger.Error("Error received from API: " + error.ToString());
-					return "";
+					return default(T);
 				}
 			}
 			catch { }
 
 			Client.logger.Debug($"Result: " + result.Content);
 
-			return result.Content;
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(result.Content);
+			}
+			catch
+			{
+				Client.logger.Error("Error deserializing result.");
+				return default(T);
+			}
 		}
 
-		internal static string Get(string endpoint, Dictionary<string,string> parameters = null)
+		internal static T Get<T>(string endpoint, Dictionary<string,string> parameters = null)
 		{
 			//Make sure client is logged in.
 			if (string.IsNullOrWhiteSpace(token))
 			{
 				Client.logger.Error($"API.Get called at endpoint '{endpoint}', but not logged in.");
-				return "";
+				return default(T);
 			}
 
 			RestRequest request = new RestRequest(endpoint, Method.GET);
@@ -102,17 +111,111 @@ namespace MattermostDriver
 			try
 			{
 				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
-				if (error.id != null && error.status_code != null)
+				if (error.id != null && error.message != null)
 				{
 					Client.logger.Error("Error received from API: " + error.ToString());
-					return "";
+					return default(T);
 				}
 			}
 			catch { }
 
 			Client.logger.Debug($"Result: " + result.Content);
 
-			return result.Content;
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(result.Content);
+			}
+			catch
+			{
+				Client.logger.Error("Error deserializing result.");
+				return default(T);
+			}
+		}
+
+		internal static T Put<T>(string endpoint, object jsonbody)
+		{
+			//Make sure client is logged in.
+			if (string.IsNullOrWhiteSpace(token))
+			{
+				Client.logger.Error($"API.Put called at endpoint '{endpoint}', but not logged in.");
+				return default(T);
+			}
+
+			RestRequest request = new RestRequest(endpoint, Method.PUT);
+
+			request.AddHeader("Content-Type", "application/json");
+			request.AddHeader("Authorization", "Bearer " + token);
+			if (jsonbody != null)
+				request.AddJsonBody(jsonbody);
+			var result = client.Execute(request);
+
+			Client.logger.Debug($"Executed API.Put at endpoint '{endpoint}'.");
+
+			try
+			{
+				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
+				if (error.id != null && error.message != null)
+				{
+					Client.logger.Error("Error received from API: " + error.ToString());
+					return default(T);
+				}
+			}
+			catch { }
+
+			Client.logger.Debug($"Result: " + result.Content);
+
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(result.Content);
+			}
+			catch
+			{
+				Client.logger.Error("Error deserializing result.");
+				return default(T);
+			}
+		}
+
+		internal static T Delete<T>(string endpoint, object jsonbody)
+		{
+			//Make sure client is logged in.
+			if (string.IsNullOrWhiteSpace(token))
+			{
+				Client.logger.Error($"API.Put called at endpoint '{endpoint}', but not logged in.");
+				return default(T);
+			}
+
+			RestRequest request = new RestRequest(endpoint, Method.DELETE);
+
+			request.AddHeader("Content-Type", "application/json");
+			request.AddHeader("Authorization", "Bearer " + token);
+			if (jsonbody != null)
+				request.AddJsonBody(jsonbody);
+			var result = client.Execute(request);
+
+			Client.logger.Debug($"Executed API.Delete at endpoint '{endpoint}'.");
+
+			try
+			{
+				AppError error = JsonConvert.DeserializeObject<AppError>(result.Content);
+				if (error.id != null && error.message != null)
+				{
+					Client.logger.Error("Error received from API: " + error.ToString());
+					return default(T);
+				}
+			}
+			catch { }
+
+			Client.logger.Debug($"Result: " + result.Content);
+
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(result.Content);
+			}
+			catch
+			{
+				Client.logger.Error("Error deserializing result.");
+				return default(T);
+			}
 		}
 	}
 }
