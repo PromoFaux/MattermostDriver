@@ -1,92 +1,156 @@
 ﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace MattermostDriver
 {
-	public class StatusOK
+	public class Analytic
 	{
-		public string status;
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "value")]
+		public int Value { get; set; }
 	}
 
-	public class Self : User
+	public class Audit
 	{
-		public bool email_verified;
-		public bool allow_marketing;
-		public NotificationProperties notify_props;
-		public long last_password_update;
-		public long last_picture_update;
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "action")]
+		public string Action { get; set; }
+
+		[JsonProperty(PropertyName = "extra_info")]
+		public string ExtraInfo { get; set; }
+
+		[JsonProperty(PropertyName = "ip_address")]
+		public string IPAddress { get; set; }
+
+		[JsonProperty(PropertyName = "session_id")]
+		public string SessionID { get; set; }
+	}
+
+	public class Channel
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "type")]
+		public string Type { get; set; }
+
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "header")]
+		public string Header { get; set; }
+
+		[JsonProperty(PropertyName = "purpose")]
+		public string Purpose { get; set; }
+
+		[JsonProperty(PropertyName = "last_post_at")]
+		public long LastPostAt { get; set; }
+
+		[JsonProperty(PropertyName = "total_msg_count")]
+		public int TotalMsgCount { get; set; }
+
+		[JsonProperty(PropertyName = "extra_update_at")]
+		public long ExtraUpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+	}
+
+	public class ChannelAutoComplete
+	{
+		[JsonProperty(PropertyName = "in_channel")]
+		public List<User> InChannel { get; set; }
+
+		[JsonProperty(PropertyName = "out_of_channel")]
+		public List<User> OutOfChannel { get; set; }
+	}
+
+	public class ChannelCounts
+	{
+		[JsonProperty(PropertyName = "counts")]
+		public Dictionary<string, int> Counts { get; set; }
+
+		[JsonProperty(PropertyName = "update_times")]
+		public Dictionary<string, long> UpdateTimes { get; set; }
+	}
+
+	public class ChannelInfo
+	{
+		[JsonProperty(PropertyName = "channel")]
+		public Channel Channel { get; set; }
+
+		[JsonProperty(PropertyName = "member")]
+		public ChannelMember Member { get; set; }
+	}
+
+	public class ChannelMember
+	{
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "roles")]
+		public string Roles { get; set; }
+
+		[JsonProperty(PropertyName = "last_viewed_at")]
+		public long LastViewedAt { get; set; }
+
+		[JsonProperty(PropertyName = "msg_count")]
+		public int MsgCount { get; set; }
+
+		[JsonProperty(PropertyName = "mention_count")]
+		public int MentionCount { get; set; }
+
+		[JsonProperty(PropertyName = "notify_props")]
+		public NotificationProperties NotificationProps { get; set; }
+
+		[JsonProperty(PropertyName = "last_update_at")]
+		public long LastUpdateAt { get; set; }
 
 		public class NotificationProperties
 		{
-			public string channel;
-			public string comments;
-			public string desktop;
-			public string desktop_duration;
-			public string desktop_sound;
-			public string email;
-			public string first_name;
-			public string mention_keys;
-			public string push;
-			public string push_status;
+			[JsonProperty(PropertyName = "desktop")]
+			public string Desktop { get; set; }
+
+			[JsonProperty(PropertyName = "mark_unread")]
+			public string MarkUnread { get; set; }
 		}
 	}
 
-	public class User
+	public class ChannelStats
 	{
-		public string id;
-		public long create_at;
-		public long update_at;
-		public long delete_at;
-		public string username;
-		public string auth_data;
-		public string auth_service;
-		public string email;
-		public string nickname;
-		public string first_name;
-		public string last_name;
-		public string position;
-		public string roles;
-		public string locale;
-	}
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
 
-	public class Post
-	{
-		public string id;
-		public long create_at;
-		public long update_at;
-		public long delete_at;
-		public string user_id;
-		public string channel_id;
-		public string root_id;
-		public string parent_id;
-		public string original_id;
-		public string message;
-		public string type;
-		public PostProperties Props;
-		public string hashtag;
-		public List<string> filenames;
-		public string pending_post_id;
-
-		public class PostProperties
-		{
-
-		}
-	}
-
-	public class Team
-	{
-		public string id;
-		public long create_at;
-		public long update_at;
-		public long delete_at;
-		public string display_name;
-		public string name;
-		public string description;
-		public string email;
-		public string type;
-		public string company_name;
-		public string allowed_domains;
-		public string invite_id;
-		public bool allow_open_invite;
+		[JsonProperty(PropertyName = "member_count")]
+		public int MemberCount { get; set; }
 	}
 
 	public class ClientConfig
@@ -154,124 +218,150 @@ namespace MattermostDriver
 		public string WebsocketSecurePort;
 	}
 
-	public class Channel
+	public class ClusterInfo
 	{
-		public string id;
-		public long create_at;
-		public long update_at;
-		public long delete_at;
-		public string team_id;
-		public string type;
-		public string display_name;
-		public string name;
-		public string header;
-		public string purpose;
-		public long last_post_at;
-		public int total_msg_count;
-		public long extra_update_at;
-		public string creator_id;
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "version")]
+		public string Version { get; set; }
+
+		[JsonProperty(PropertyName = "config_hash")]
+		public string ConfigHash { get; set; }
+
+		[JsonProperty(PropertyName = "internode_url")]
+		public string InternodeUrl { get; set; }
+
+		[JsonProperty(PropertyName = "hostname")]
+		public string Hostname { get; set; }
+
+		[JsonProperty(PropertyName = "last_ping")]
+		public long LastPing { get; set; }
+
+		[JsonProperty(PropertyName = "is_alive")]
+		public string IsAlive { get; set; }
 	}
 
-	public class AutoCompleteResponse
+	public class Command
 	{
-		public List<User> in_channel;
-		public List<User> out_of_channel;
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "token")]
+		public string Token { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "trigger")]
+		public string Trigger { get; set; }
+
+		[JsonProperty(PropertyName = "method")]
+		public string Method { get; set; }
+
+		[JsonProperty(PropertyName = "username")]
+		public string Username { get; set; }
+
+		[JsonProperty(PropertyName = "icon_url")]
+		public string IconURL { get; set; }
+
+		[JsonProperty(PropertyName = "auto_complete")]
+		public bool AutoComplete { get; set; }
+
+		[JsonProperty(PropertyName = "auto_complete_desc")]
+		public string AutoCompleteDesc { get; set; }
+
+		[JsonProperty(PropertyName = "auto_complete_hint")]
+		public string AutoCompleteHint { get; set; }
+
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+
+		[JsonProperty(PropertyName = "url")]
+		public string URL { get; set; }
 	}
 
-	public class TeamMember
+	public class CommandArgs
 	{
-		public string team_id;
-		public string user_id;
-		public string roles;
-		public long delete_at;
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "root_id")]
+		public string RootID { get; set; }
+
+		[JsonProperty(PropertyName = "parent_id")]
+		public string ParentID { get; set; }
+
+		[JsonProperty(PropertyName = "command")]
+		public string Command { get; set; }
 	}
 
-	public class MessageCount
+	public class CommandResponse
 	{
-		public string team_id;
-		public int msg_count;
-		public int mention_count;
+		[JsonProperty(PropertyName = "response_type")]
+		public string ResponseType { get; set; }
+
+		[JsonProperty(PropertyName = "text")]
+		public string Text { get; set; }
+
+		[JsonProperty(PropertyName = "username")]
+		public string Username { get; set; }
+
+		[JsonProperty(PropertyName = "icon_url")]
+		public string IconURL { get; set; }
+
+		[JsonProperty(PropertyName = "goto_location")]
+		public string GotoLocation { get; set; }
+
+		//public -- Attachments { get; set; }
 	}
 
-	public class TeamStats
+	public class Compliance
 	{
-		public string team_id;
-		public int total_member_count;
-		public int active_member_count;
-	}
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
 
-	public class ChannelMember
-	{
-		public string channel_id;
-		public string user_id;
-		public string roles;
-		public long last_viewed_at;
-		public int msg_count;
-		public int mention_count;
-		public NotificationProperties notify_props;
-		public long last_update_at;
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
 
-		public class NotificationProperties
-		{
-			public string desktop;
-			public string mark_unread;
-		}
-	}
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
 
-	public class ChannelInfo
-	{
-		public Channel channel;
-		public ChannelMember member;
-	}
+		[JsonProperty(PropertyName = "status")]
+		public string Status { get; set; }
 
-	public class ChannelStats
-	{
-		public string channel_id;
-		public int member_count;
-	}
+		[JsonProperty(PropertyName = "desc")]
+		public string Description { get; set; }
 
-	public class SearchResult
-	{
-		public List<string> order;
-		public Dictionary<string, Post> posts;
-	}
+		[JsonProperty(PropertyName = "type")]
+		public string Type { get; set; }
 
-	public class Reaction
-	{
-		public string user_id;
-		public string post_id;
-		public string emoji_name;
-		public long create_at;
-	}
+		[JsonProperty(PropertyName = "start_at")]
+		public long StartAt { get; set; }
 
-	public class Preference
-	{
-		public string user_id;
-		public string category;
-		public string name;
-		public string value;
-	}
+		[JsonProperty(PropertyName = "end_at")]
+		public long EndAt { get; set; }
 
-	public class IncomingWebook
-	{
-		public string id;
-		public long create_at;
-		public long update_at;
-		public long delete_at;
-		public string channel_id;
-		public string description;
-		public string display_name;
-	}
+		[JsonProperty(PropertyName = "keywords")]
+		public string Keywords { get; set; }
 
-	public class Audit
-	{
-		public string id;
-		public long create_at;
-		public string user_id;
-		public string action;
-		public string extra_info;
-		public string ip_address;
-		public string session_id;
+		[JsonProperty(PropertyName = "emails")]
+		public string Emails { get; set; }
 	}
 
 	public class Config
@@ -599,15 +689,638 @@ namespace MattermostDriver
 		}
 	}
 
-	public class Analytic
+	public class Emoji
 	{
-		public string name;
-		public int value;
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
 	}
 
-	public class ChannelCounts
+	public class FileInfo
 	{
-		public Dictionary<string, int> counts;
-		public Dictionary<string, long> update_times;
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+
+		[JsonProperty(PropertyName = "post_id", NullValueHandling = NullValueHandling.Ignore)]
+		public string PostID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "extension")]
+		public string Extension { get; set; }
+
+		[JsonProperty(PropertyName = "size")]
+		public long Size { get; set; }
+
+		[JsonProperty(PropertyName = "mime_type")]
+		public string MimeType { get; set; }
+
+		[JsonProperty(PropertyName = "width", NullValueHandling = NullValueHandling.Ignore)]
+		public int Width { get; set; }
+
+		[JsonProperty(PropertyName = "height", NullValueHandling = NullValueHandling.Ignore)]
+		public int Height { get; set; }
+
+		[JsonProperty(PropertyName = "has_preview_image", NullValueHandling = NullValueHandling.Ignore)]
+		public bool HasPreviewImage { get; set; }
+	}
+
+	public class IncomingWebook
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+	}
+
+	public class InitialLoad
+	{
+		[JsonProperty(PropertyName = "user")]
+		public User User { get; set; }
+
+		[JsonProperty(PropertyName = "team_members")]
+		public List<TeamMember> TeamMembers { get; set; }
+
+		[JsonProperty(PropertyName = "teams")]
+		public List<Team> Teams { get; set; }
+
+		[JsonProperty(PropertyName = "preferences")]
+		public List<Preference> Preferences { get; set; }
+
+		[JsonProperty(PropertyName = "client_cfg")]
+		public ClientConfig ClientConfig { get; set; }
+
+		[JsonProperty(PropertyName = "license_cfg")]
+		public License License { get; set; }
+
+		[JsonProperty(PropertyName = "no_accounts")]
+		public bool NoAccounts { get; set; }
+	}
+
+	public class Invite
+	{
+		[JsonProperty(PropertyName = "email")]
+		public string Email { get; set; }
+	}
+
+	public class InviteInfo
+	{
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+	}
+
+	public class License
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "issued_at")]
+		public long IssuedAt { get; set; }
+
+		[JsonProperty(PropertyName = "starts_at")]
+		public long StartsAt { get; set; }
+
+		[JsonProperty(PropertyName = "expires_at")]
+		public long ExpiresAt { get; set; }
+
+		[JsonProperty(PropertyName = "customer")]
+		public Customer customer { get; set; }
+
+		[JsonProperty(PropertyName = "features")]
+		public Features features { get; set; }
+
+		public class Customer
+		{
+			[JsonProperty(PropertyName = "id")]
+			public string ID { get; set; }
+
+			[JsonProperty(PropertyName = "name")]
+			public string Name { get; set; }
+
+			[JsonProperty(PropertyName = "email")]
+			public string Email { get; set; }
+
+			[JsonProperty(PropertyName = "company")]
+			public string Company { get; set; }
+
+			[JsonProperty(PropertyName = "phone_number")]
+			public string PhoneNumber { get; set; }
+		}
+
+		public class Features
+		{
+			[JsonProperty(PropertyName = "users")]
+			public int Users { get; set; }
+
+			[JsonProperty(PropertyName = "ldap")]
+			public bool LDAP { get; set; }
+
+			[JsonProperty(PropertyName = "mfa")]
+			public bool MFA { get; set; }
+
+			[JsonProperty(PropertyName = "google_oauth")]
+			public bool GoogleOAuth { get; set; }
+
+			[JsonProperty(PropertyName = "office365_oauth")]
+			public bool Office365OAuth { get; set; }
+
+			[JsonProperty(PropertyName = "compliance")]
+			public bool Compliance { get; set; }
+
+			[JsonProperty(PropertyName = "cluster")]
+			public bool Cluster { get; set; }
+
+			[JsonProperty(PropertyName = "metrics")]
+			public bool Metrics { get; set; }
+
+			[JsonProperty(PropertyName = "custom_brand")]
+			public bool CustomBrand { get; set; }
+
+			[JsonProperty(PropertyName = "mhpns")]
+			public bool MHPNS { get; set; }
+
+			[JsonProperty(PropertyName = "saml")]
+			public bool SAML { get; set; }
+
+			[JsonProperty(PropertyName = "password_requirements")]
+			public bool PasswordRequirements { get; set; }
+
+			[JsonProperty(PropertyName = "future_features")]
+			public bool FutureFeatures { get; set; }
+		}
+	}
+
+	public class MessageCount
+	{
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "msg_count")]
+		public int MsgCount { get; set; }
+
+		[JsonProperty(PropertyName = "mention_count")]
+		public int MentionCount { get; set; }
+	}
+
+	public class OAuthApp
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "client_secret")]
+		public string ClientSecret { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+
+		[JsonProperty(PropertyName = "icon_url")]
+		public string IconURL { get; set; }
+
+		[JsonProperty(PropertyName = "callback_urls")]
+		public List<string> CallbackURLs { get; set; }
+
+		[JsonProperty(PropertyName = "homepage")]
+		public string Homepage { get; set; }
+
+		[JsonProperty(PropertyName = "is_trusted")]
+		public bool IsTrusted { get; set; }
+	}
+
+	public class OutgoingWebhook
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "token")]
+		public string Token { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "creator_id")]
+		public string CreatorID { get; set; }
+
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "trigger_words")]
+		public List<string> TriggerWords { get; set; }
+
+		[JsonProperty(PropertyName = "trigger_when")]
+		public int TriggerWhen { get; set; }
+
+		[JsonProperty(PropertyName = "callback_urls")]
+		public List<string> CallbackURLs { get; set; }
+
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+
+		[JsonProperty(PropertyName = "content_type")]
+		public string ContentType { get; set; }
+	}
+
+	public class Pong
+	{
+		[JsonProperty(PropertyName = "version")]
+		public string Version { get; set; }
+
+		[JsonProperty(PropertyName = "server_time")]
+		public string ServerTime { get; set; }
+	}
+
+	public class Post
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "root_id")]
+		public string RootID { get; set; }
+
+		[JsonProperty(PropertyName = "parent_id")]
+		public string ParentID { get; set; }
+
+		[JsonProperty(PropertyName = "original_id")]
+		public string OriginalID { get; set; }
+
+		[JsonProperty(PropertyName = "message")]
+		public string Message { get; set; }
+
+		[JsonProperty(PropertyName = "type")]
+		public string Type { get; set; }
+
+		[JsonProperty(PropertyName = "Props")]
+		public Properties Props { get; set; }
+
+		[JsonProperty(PropertyName = "hashtag")]
+		public string Hashtag { get; set; }
+
+		[JsonProperty(PropertyName = "filenames")]
+		public List<string> FileNames { get; set; }
+
+		[JsonProperty(PropertyName = "file_ids")]
+		public List<string> FileIDs { get; set; }
+
+		[JsonProperty(PropertyName = "pending_post_id")]
+		public string PendingPostID { get; set; }
+
+		public class Properties
+		{
+			[JsonProperty(PropertyName = "username")]
+			public string Username { get; set; }
+		}
+	}
+
+	public class PostList
+	{
+		[JsonProperty(PropertyName = "order")]
+		public List<string> Order { get; set; }
+
+		[JsonProperty(PropertyName = "posts")]
+		public Dictionary<string, Post> Posts { get; set; }
+	}
+
+	public class Preference
+	{
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "category")]
+		public string Category { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "value")]
+		public string Value { get; set; }
+	}
+
+	public class Reaction
+	{
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "post_id")]
+		public string PostID { get; set; }
+
+		[JsonProperty(PropertyName = "emoji_name")]
+		public string EmojiName { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+	}
+
+	public class Self : User
+	{
+		[JsonProperty(PropertyName = "email_verified")]
+		public bool EmailVerified { get; set; }
+
+		[JsonProperty(PropertyName = "allow_marketing")]
+		public bool AllowMarketing { get; set; }
+
+		[JsonProperty(PropertyName = "notify_props")]
+		public NotificationProperties NotificationProps { get; set; }
+
+		[JsonProperty(PropertyName = "last_password_update")]
+		public long LastPasswordUpdate { get; set; }
+
+		[JsonProperty(PropertyName = "last_picture_update")]
+		public long LastPictureUpdate { get; set; }
+
+		public class NotificationProperties
+		{
+			[JsonProperty(PropertyName = "channel")]
+			public string Channel { get; set; }
+
+			[JsonProperty(PropertyName = "comments")]
+			public string Comments { get; set; }
+
+			[JsonProperty(PropertyName = "desktop")]
+			public string Desktop { get; set; }
+
+			[JsonProperty(PropertyName = "desktop_duration")]
+			public string DesktopDuration { get; set; }
+
+			[JsonProperty(PropertyName = "desktop_sound")]
+			public string DesktopSound { get; set; }
+
+			[JsonProperty(PropertyName = "email")]
+			public string Email { get; set; }
+
+			[JsonProperty(PropertyName = "first_name")]
+			public string FirstName { get; set; }
+
+			[JsonProperty(PropertyName = "mention_keys")]
+			public string MentionKeys { get; set; }
+
+			[JsonProperty(PropertyName = "push")]
+			public string Push { get; set; }
+
+			[JsonProperty(PropertyName = "push_status")]
+			public string PushStatus { get; set; }
+		}
+	}
+
+	public class Session
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "token")]
+		public string Token { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "expires_at")]
+		public long ExpiresAt { get; set; }
+
+		[JsonProperty(PropertyName = "last_activity_at")]
+		public long LastActivityAt { get; set; }
+
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "device_id")]
+		public string DeviceID { get; set; }
+
+		[JsonProperty(PropertyName = "roles")]
+		public string Roles { get; set; }
+
+		[JsonProperty(PropertyName = "is_oauth")]
+		public bool IsOAuth { get; set; }
+
+		[JsonProperty(PropertyName = "props")]
+		public Properties Props { get; set; }
+
+		[JsonProperty(PropertyName = "team_members")]
+		public List<TeamMember> TeamMembers { get; set; }
+
+		public class Properties
+		{
+
+		}
+	}
+
+	public class Team
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "display_name")]
+		public string DisplayName { get; set; }
+
+		[JsonProperty(PropertyName = "name")]
+		public string Name { get; set; }
+
+		[JsonProperty(PropertyName = "description")]
+		public string Description { get; set; }
+
+		[JsonProperty(PropertyName = "email")]
+		public string Email { get; set; }
+
+		[JsonProperty(PropertyName = "type")]
+		public string Type { get; set; }
+
+		[JsonProperty(PropertyName = "company_name")]
+		public string CompanyName { get; set; }
+
+		[JsonProperty(PropertyName = "allowed_domains")]
+		public string AllowedDomains { get; set; }
+
+		[JsonProperty(PropertyName = "invite_id")]
+		public string InviteID { get; set; }
+
+		[JsonProperty(PropertyName = "allow_open_invite")]
+		public bool AllowOpenInvite { get; set; }
+	}
+
+	public class TeamAutoComplete
+	{
+		[JsonProperty(PropertyName = "in_team")]
+		public List<User> InTeam { get; set; }
+	}
+
+	public class TeamMember
+	{
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "roles")]
+		public string Roles { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+	}
+
+	public class TeamStats
+	{
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "total_member_count")]
+		public int TotalMemberCount { get; set; }
+
+		[JsonProperty(PropertyName = "active_member_count")]
+		public int ActiveMemberCount { get; set; }
+	}
+
+	public class TeamUnread
+	{
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "msg_count")]
+		public long MsgCount { get; set; }
+
+		[JsonProperty(PropertyName = "mention_count")]
+		public long MentionCount { get; set; }
+	}
+
+	public class User
+	{
+		[JsonProperty(PropertyName = "id")]
+		public string ID { get; set; }
+
+		[JsonProperty(PropertyName = "create_at")]
+		public long CreateAt { get; set; }
+
+		[JsonProperty(PropertyName = "update_at")]
+		public long UpdateAt { get; set; }
+
+		[JsonProperty(PropertyName = "delete_at")]
+		public long DeleteAt { get; set; }
+
+		[JsonProperty(PropertyName = "username")]
+		public string Username { get; set; }
+
+		[JsonProperty(PropertyName = "auth_data")]
+		public string AuthData { get; set; }
+
+		[JsonProperty(PropertyName = "auth_service")]
+		public string AuthService { get; set; }
+
+		[JsonProperty(PropertyName = "email")]
+		public string Email { get; set; }
+
+		[JsonProperty(PropertyName = "nickname")]
+		public string Nickname { get; set; }
+
+		[JsonProperty(PropertyName = "first_name")]
+		public string FirstName { get; set; }
+
+		[JsonProperty(PropertyName = "last_name")]
+		public string LastName { get; set; }
+
+		[JsonProperty(PropertyName = "position")]
+		public string Position { get; set; }
+
+		[JsonProperty(PropertyName = "roles")]
+		public string Roles { get; set; }
+
+		[JsonProperty(PropertyName = "locale")]
+		public string Locale { get; set; }
 	}
 }
