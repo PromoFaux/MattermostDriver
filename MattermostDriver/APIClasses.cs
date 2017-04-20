@@ -1323,4 +1323,10 @@ namespace MattermostDriver
 		[JsonProperty(PropertyName = "locale")]
 		public string Locale { get; set; }
 	}
+
+	public class UserAutoComplete
+	{
+		[JsonProperty(PropertyName = "users")]
+		public List<User> Users { get; set; }
+	}
 }

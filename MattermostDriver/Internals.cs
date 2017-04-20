@@ -55,4 +55,62 @@ namespace MattermostDriver
 			return $"ID: {id} | message: {message} | request_id: {request_id} | status_code: {status_code} | is_oauth: {is_oauth}";
 		}
 	}
+
+	internal class ReplyACK
+	{
+		public string status;
+		public int seq_reply;
+	}
+
+	internal class StatusOK
+	{
+		public string status;
+	}
+
+	internal class Success
+	{
+		public string SUCCESS;
+	}
+
+	internal class UserIDResponse
+	{
+		public string user_id;
+	}
+
+	internal class CheckMFA
+	{
+		public string mfa_required;
+	}
+
+	internal class GetMFA
+	{
+		//public string qr_code
+		public string secret;
+	}
+
+	internal class IDResponse
+	{
+		public string id;
+	}
+
+	internal class FollowLink
+	{
+		public string follow_link;
+	}
+
+	internal class RemovedUser
+	{
+		public string channel_id;
+		public string removed_user_id;
+	}
+
+	internal class EmailResponse
+	{
+		public string email;
+	}
+
+	internal class OAuthResponse
+	{
+		public string redirect;
+	}
 }

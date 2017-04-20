@@ -415,20 +415,62 @@ namespace MattermostDriver
 		#endregion
 
 		#region User Methods
-		// CreateUser creates a user in the system based on the provided user struct.
-		//TODO: add hash/inviteID options?
-		[ApiRoute("/users", RequestType.POST)]
-		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
+		// DeleteUser deactivates a user in the system based on the provided user id string.
+		[ApiRoute("/users/{user_id}", RequestType.DELETE)]
+		public void DeleteUser(string user_id)
 		{
-			var obj = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
-			return APIPost<User>($"/users", obj);
+			APIDelete($"/users/{user_id}");
+		}
+
+		// GetUser returns a user based on the provided user id string.
+		[ApiRoute("/users/{user_id}", RequestType.GET)]
+		public User GetUser(string user_id)
+		{
+			return APIGet<User>($"/users/{user_id}");
 		}
 
 		// UpdateUser updates a user in the system based on the provided user struct.
 		[ApiRoute("/users/{user_id}", RequestType.PUT)]
 		public User UpdateUser(User user)
 		{
-			return APIPut<User>($"/users/{user.id}", user);
+			return APIPut<User>($"/users/{user.ID}", user);
+		}
+
+		// UpdateUserActive updates status of a user whether active or not.
+		[ApiRoute("/users/{user_id}/active", RequestType.PUT)]
+		public void UpdateUserActive(string user_id, bool active)
+		{
+			var obj = new { active = active };
+			APIPut<StatusOK>($"/users/{user_id}/active", obj);
+		}
+
+		// GetUserAudits returns a list of audit based on the provided user id string.
+		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
+		public List<Audit> GetAudits(string user_id, int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+			return APIGet<List<Audit>>($"/users/{user_id}/audits", options);
+		}
+
+		// UpdateUserMfa activates multi-factor authentication for a user if activate
+		// is true and a valid code is provided. If activate is false, then code is not
+		// required and multi-factor authentication is disabled for the user.
+		[ApiRoute("/users/{user_id}/mfa", RequestType.PUT)]
+		public void UpdateUserMFA(string user_id, bool activate, string code = "")
+		{
+			var obj = new { code = code, activate = activate };
+			APIPut<StatusOK>($"/users/{user_id}/mfa", obj);
+		}
+
+		// GenerateMfaSecret will generate a new MFA secret for a user and return it as a string.
+		[ApiRoute("/users/{user_id}/mfa/generate", RequestType.POST)]
+		public string GenerateMFA(string user_id)
+		{
+			return APIPost<GetMFA>($"/users/{user_id}/mfa/generate", null).secret;
 		}
 
 		// PatchUser partially updates a user in the system. Any missing fields are not updated.
@@ -437,14 +479,6 @@ namespace MattermostDriver
 		{
 			var obj = new { username = username, nickname = nickname, first_name = first_name, last_name = last_name, position = position, email = email, locale = locale };
 			return APIPut<User>($"/users/{user_id}/patch", obj);
-		}
-
-		// UpdateUserRoles updates a user's roles in the system. A user can have "system_user" and "system_admin" roles.
-		[ApiRoute("/users/{user_id}/roles", RequestType.PUT)]
-		public void UpdateUserRoles(string user_id, string roles)
-		{
-			var obj = new { user_id = user_id, roles = roles };
-			APIPut<StatusOK>($"/users/{user_id}/roles", obj);
 		}
 
 		// UpdateUserPassword updates a user's password. Must be logged in as the user or be a system administrator.
@@ -472,6 +506,38 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/{user_id}/password/reset/send", obj);
 		}
 
+		// UpdateUserRoles updates a user's roles in the system. A user can have "system_user" and "system_admin" roles.
+		[ApiRoute("/users/{user_id}/roles", RequestType.PUT)]
+		public void UpdateUserRoles(string user_id, string roles)
+		{
+			var obj = new { user_id = user_id, roles = roles };
+			APIPut<StatusOK>($"/users/{user_id}/roles", obj);
+		}
+
+		// GetSessions returns a list of sessions based on the provided user id string.
+		[ApiRoute("/users/{user_id}/sessions", RequestType.GET)]
+		public List<Session> GetSessions(string user_id)
+		{
+			return APIGet<List<Session>>($"/users/{user_id}/sessions");
+		}
+
+		// RevokeSession revokes a user session based on the provided user id and session id strings.
+		[ApiRoute("/users/{user_id}/sessions/revoke", RequestType.POST)]
+		public void RevokeSessions(string user_id, string session_id)
+		{
+			var obj = new { session_id = session_id };
+			APIPost<StatusOK>($"/users/{user_id}/sessions/revoke", obj);
+		}
+
+		// CreateUser creates a user in the system based on the provided user struct.
+		//TODO: add hash/inviteID options?
+		[ApiRoute("/users", RequestType.POST)]
+		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
+		{
+			var obj = new { email = email, username = username, password = password, first_name = first_name, last_name = last_name, nickname = nickname, locale = locale };
+			return APIPost<User>($"/users", obj);
+		}
+
 		// GetUsers returns a page of users on the system. Page counting starts at 0.
 		[ApiRoute("/users", RequestType.GET)]
 		public List<User> GetUsers(int page, int per_page, string in_team = "", string in_channel = "", string not_in_channel = "")
@@ -492,18 +558,20 @@ namespace MattermostDriver
 			return APIGet<List<User>>("/users", options);
 		}
 
-		// GetUser returns a user based on the provided user id string.
-		[ApiRoute("/users/{user_id}", RequestType.GET)]
-		public User GetUser(string user_id)
+		// AutocompleteUsers returns the users in the system, team, or channel based on search term.
+		[ApiRoute("/users/autocomplete", RequestType.GET)]
+		public UserAutoComplete AutoCompleteUsers(string username, string in_channel = "", string in_team = "")
 		{
-			return APIGet<User>($"/users/{user_id}");
-		}
+			Dictionary<string, string> options = new Dictionary<string, string>
+			{
+				{ "name", username }
+			};
+			if (!string.IsNullOrWhiteSpace(in_channel))
+				options.Add("in_channel", in_channel);
+			if (!string.IsNullOrWhiteSpace(in_team))
+				options.Add("in_team", in_team);
 
-		// GetUserByUsername returns a user based on the provided user name string.
-		[ApiRoute("/users/username/{username}", RequestType.GET)]
-		public User GetUserByUsername(string username)
-		{
-			return APIGet<User>($"/users/username/{username}");
+			return APIGet<UserAutoComplete>($"/users/autocomplete", options);
 		}
 
 		// GetUserByEmail returns a user based on the provided user email string.
@@ -513,6 +581,24 @@ namespace MattermostDriver
 			return APIGet<User>($"/users/email/{email}");
 		}
 
+		// VerifyUserEmail will verify a user's email using user id and hash strings.
+		[ApiRoute("/users/email/verify", RequestType.POST)]
+		public void VerifyUserEmail(string user_id, string hash_id)
+		{
+			var obj = new { user_id = user_id, hash_id = hash_id };
+			APIPost<StatusOK>($"/users/email/verify", obj);
+		}
+
+		// SendVerificationEmail will send an email to the user with the provided email address, if
+		// that user exists. The email will contain a link that can be used to verify the user's
+		// email address.
+		[ApiRoute("/users/email/verify/send", RequestType.POST)]
+		public void SendVerificationEmail(string email)
+		{
+			var obj = new { email = email };
+			APIPost<StatusOK>($"/users/email/verify/send", obj);
+		}
+
 		// GetUsersByIds returns a list of users based on the provided user ids.
 		[ApiRoute("/users/ids", RequestType.POST)]
 		public List<User> GetUsersByIDs(List<string> ids)
@@ -520,52 +606,12 @@ namespace MattermostDriver
 			return APIPost<List<User>>($"/users/ids", ids);
 		}
 
-		[ApiRoute("/users/search", RequestType.POST)]
-		public List<User> SearchUsers(string term, string team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false)
-		{
-			throw new NotImplementedException();
-			var obj = new { term = term, team_id = team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive };
-			return APIPost<List<User>>($"/users/search", obj);
-		}
-
-		[ApiRoute("/users/autocomplete", RequestType.GET)]
-		public List<User> AutoCompleteUsers(string term, string in_channel = "", string in_team = "")
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>
-			{
-				{ "term", term }
-			};
-			if (!string.IsNullOrWhiteSpace(in_channel))
-				options.Add("in_channel", in_channel);
-			if (!string.IsNullOrWhiteSpace(in_team))
-				options.Add("in_team", in_team);
-
-			return APIGet<List<User>>($"/users/autocomplete", options);
-		}
-
-		[ApiRoute("/users/{user_id}/email/verify", RequestType.POST)]
-		public void VerifyEmail(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/users/{user_id}/email/verify/send", RequestType.POST)]
-		public void SendEmailVerification(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		// Not implemented
-		// [ApiRoute("/users/{user_id}/image"), RequestType.POST)]
-		// [ApiRoute("/users/{user_id}/image"), RequestType.GET)]
-
 		// Login authenticates a user by login id, which can be username, email or some sort
 		// of SSO identifier based on server configuration, and a password.
 		[ApiRoute("/users/login", RequestType.POST)]
 		public Self Login(string login_id, string password)
 		{
-			var obj = new { login_id = login_id, password = password};
+			var obj = new { login_id = login_id, password = password };
 			return APIPostGetAuth(obj);
 		}
 
@@ -591,7 +637,7 @@ namespace MattermostDriver
 		[ApiRoute("/users/login", RequestType.POST)]
 		public Self LoginWithDevice(string login_id, string password, string device_id = "")
 		{
-			var obj = new { login_id = login_id, password = password, device_id = device_id};
+			var obj = new { login_id = login_id, password = password, device_id = device_id };
 			return APIPostGetAuth(obj);
 		}
 
@@ -603,61 +649,50 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/logout", null);
 		}
 
+		// SwitchAccountType changes a user's login type from one type to another.
 		[ApiRoute("/users/login/switch", RequestType.POST)]
-		public void SwitchLoginType()
+		public string SwitchAccountType(string current_service, string new_service, string email, string current_password = "", string new_password = "", string mfa_code = "", string ldap_id = "")
 		{
-			throw new NotImplementedException();
+			var obj = new { current_service = current_service, new_service = new_service, email = email, current_password = current_password, new_password = new_password, mfa_code = mfa_code, ldap_id = ldap_id };
+			return APIPost<FollowLink>("/users/login/switch", obj).follow_link;
 		}
 
-		[ApiRoute("/users/{user_id}/sessions", RequestType.GET)]
-		public void GetSessions(string user_id)
+		// CheckUserMfa checks whether a user has MFA active on their account or not based on the
+		// provided login id.
+		[ApiRoute("/users/mfa", RequestType.POST)]
+		public bool CheckUserMfa(string login_id)
 		{
-			throw new NotImplementedException();
+			var obj = new { login_id = login_id };
+			var resp = APIPost<CheckMFA>("/users/mfa", obj);
+			return resp.mfa_required == "true";
 		}
 
-		[ApiRoute("/users/{user_id}/sessions/revoke", RequestType.POST)]
-		public void RevokeSessions(string user_id)
+		// SearchUsers returns a list of users based on some search criteria.
+		[ApiRoute("/users/search", RequestType.POST)]
+		public List<User> SearchUsers(string term, string team_id, string not_in_team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false, bool without_team = false)
 		{
-			throw new NotImplementedException();
+			var obj = new { term = term, team_id = team_id, not_in_team_id = not_in_team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive, without_team = without_team };
+			return APIPost<List<User>>($"/users/search", obj);
 		}
 
-		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
-		public List<Audit> GetAudits(string user_id)
+		// AttachDeviceId attaches a mobile device ID to the current session.
+		[ApiRoute("/users/sessions/device", RequestType.PUT)]
+		public void AttachDeviceId(string device_id)
 		{
-			throw new NotImplementedException();
-			return APIGet<List<Audit>>("/users/{user_id}/audits");
+			var obj = new { device_id = device_id };
+			APIPut<StatusOK>("/users/sessions/device", obj);
 		}
 
-		[ApiRoute("/users/{user_id}/device", RequestType.PUT)]
-		public void UpdateDeviceID(string user_id)
+		// GetUserByUsername returns a user based on the provided user name string.
+		[ApiRoute("/users/username/{username}", RequestType.GET)]
+		public User GetUserByUsername(string username)
 		{
-			throw new NotImplementedException();
+			return APIGet<User>($"/users/username/{username}");
 		}
 
-		[ApiRoute("/users/{user_id}/mfa", RequestType.GET)]
-		public bool CheckMFAActive(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/users/{user_id}/mfa", RequestType.PUT)]
-		public void UpdateMFA(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/users/{user_id}/mfa/generate", RequestType.POST)]
-		public void GenerateMFA(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		// DeleteUser deactivates a user in the system based on the provided user id string.
-		[ApiRoute("/users/{user_id}", RequestType.DELETE)]
-		public void DeleteUser(string user_id)
-		{
-			APIDelete($"/users/{user_id}");
-		}
+		// Not implemented
+		// [ApiRoute("/users/{user_id}/image"), RequestType.POST)]
+		// [ApiRoute("/users/{user_id}/image"), RequestType.GET)]
 		#endregion
 
 		#region Team Methods
@@ -699,7 +734,7 @@ namespace MattermostDriver
 		public Team UpdateTeam(Team team)
 		{
 			throw new NotImplementedException();
-			return APIPut<Team>($"/teams/{team.id}", team);
+			return APIPut<Team>($"/teams/{team.ID}", team);
 		}
 
 		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
@@ -867,7 +902,7 @@ namespace MattermostDriver
 		public Channel UpdateChannel(Channel channel)
 		{
 			throw new NotImplementedException();
-			return APIPost<Channel>($"/channels/{channel.id}", channel);
+			return APIPost<Channel>($"/channels/{channel.ID}", channel);
 		}
 
 		[ApiRoute("/channels/{channel_id}/patch", RequestType.PUT)]
@@ -987,7 +1022,7 @@ namespace MattermostDriver
 
 		// GetPostsForChannel gets a page of posts with an array for ordering for a channel.
 		[ApiRoute("/channels/{channel_id}/posts", RequestType.GET)]
-		public SearchResult GetPosts(string channel_id, int page, int per_page)//, long since = 0, string before = "", string after = "")
+		public PostList GetPosts(string channel_id, int page, int per_page)//, long since = 0, string before = "", string after = "")
 		{
 			Dictionary<string, string> options = new Dictionary<string, string>()
 			{
@@ -1000,7 +1035,7 @@ namespace MattermostDriver
 			//	options.Add("before", before);
 			//if (!string.IsNullOrWhiteSpace(after))
 			//	options.Add("after", after);
-			return APIGet<SearchResult>($"/channels/{channel_id}/posts");
+			return APIGet<PostList>($"/channels/{channel_id}/posts");
 		}
 
 		[ApiRoute("/posts/{post_id}", RequestType.DELETE)]
@@ -1011,15 +1046,15 @@ namespace MattermostDriver
 		}
 
 		[ApiRoute("/posts/search", RequestType.POST)]
-		public SearchResult SearchPosts(string terms, bool is_or_search)
+		public PostList SearchPosts(string terms, bool is_or_search)
 		{
 			throw new NotImplementedException();
 			var obj = new { terms = terms, is_or_search = is_or_search };
-			return APIPost<SearchResult>($"/posts/search", obj);
+			return APIPost<PostList>($"/posts/search", obj);
 		}
 
 		[ApiRoute("/posts/flagged", RequestType.GET)]
-		public SearchResult GetFlaggedPosts(string in_team = "", string in_channel = "")
+		public PostList GetFlaggedPosts(string in_team = "", string in_channel = "")
 		{
 			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>();
@@ -1029,9 +1064,9 @@ namespace MattermostDriver
 				options.Add("in_channel", in_channel);
 
 			if (options.Count == 0)
-				return APIGet<SearchResult>($"/posts/flagged");
+				return APIGet<PostList>($"/posts/flagged");
 			else
-				return APIGet<SearchResult>($"/posts/flagged", options);
+				return APIGet<PostList>($"/posts/flagged", options);
 		}
 
 		//Not implemented
@@ -1046,9 +1081,9 @@ namespace MattermostDriver
 
 		// GetPostThread gets a post with all the other posts in the same thread.
 		[ApiRoute("/posts/{post_id}/thread", RequestType.GET)]
-		public SearchResult GetPostThread(string post_id)
+		public PostList GetPostThread(string post_id)
 		{
-			return APIGet<SearchResult>($"/posts/{post_id}/thread");
+			return APIGet<PostList>($"/posts/{post_id}/thread");
 		}
 		#endregion
 

@@ -111,7 +111,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Post ID: {data.post.id} | Sender Name: {data.sender_name} | Message: {data.post.message}";
+			return $"Post ID: {data.post.ID} | Sender Name: {data.sender_name} | Message: {data.post.Message}";
 		}
 	}
 
@@ -171,7 +171,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"User ID: {data.user.id} | Username: {data.user.username}";
+			return $"User ID: {data.user.ID} | Username: {data.user.Username}";
 		}
 	}
 
@@ -223,7 +223,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Post ID: {data.post.id} | Message: {data.post.message}";
+			return $"Post ID: {data.post.ID} | Message: {data.post.Message}";
 		}
 	}
 
@@ -258,7 +258,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Preference: User ID: {data.preference.user_id} | Category: {data.preference.category} | Name: {data.preference.name} | Value: {data.preference.value}";
+			return $"Preference: User ID: {data.preference.UserID} | Category: {data.preference.Category} | Name: {data.preference.Name} | Value: {data.preference.Value}";
 		}
 	}
 
@@ -309,7 +309,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Post ID: {data.post.id} | Message: {data.post.message}";
+			return $"Post ID: {data.post.ID} | Message: {data.post.Message}";
 		}
 	}
 
@@ -344,7 +344,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Post ID: {data.post.id} | Message: {data.post.message}";
+			return $"Post ID: {data.post.ID} | Message: {data.post.Message}";
 		}
 	}
 
@@ -380,7 +380,7 @@ namespace MattermostDriver
 
 		public override string ToString()
 		{
-			return $"Reaction Name: {data.reaction.emoji_name}";
+			return $"Reaction Name: {data.reaction.EmojiName}";
 		}
 	}
 
