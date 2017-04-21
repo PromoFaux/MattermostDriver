@@ -1117,6 +1117,18 @@ namespace MattermostDriver
 		public long CreateAt { get; set; }
 	}
 
+	public class SamlCertificateStatus
+	{
+		[JsonProperty(PropertyName = "idp_certificate_file")]
+		public bool IdpCertificateFile { get; set; }
+
+		[JsonProperty(PropertyName = "private_key_file")]
+		public bool PrivateKeyFile { get; set; }
+
+		[JsonProperty(PropertyName = "public_certificate_file")]
+		public bool PublicCertificateFile { get; set; }
+	}
+
 	public class Self : User
 	{
 		[JsonProperty(PropertyName = "email_verified")]
@@ -1207,6 +1219,21 @@ namespace MattermostDriver
 		{
 
 		}
+	}
+
+	public class UserStatus
+	{
+		[JsonProperty(PropertyName = "user_id")]
+		public string UserID { get; set; }
+
+		[JsonProperty(PropertyName = "status")]
+		public string Status { get; set; }
+
+		[JsonProperty(PropertyName = "manual")]
+		public bool Manual { get; set; }
+
+		[JsonProperty(PropertyName = "last_activity_at")]
+		public long LastActivityAt { get; set; }
 	}
 
 	public class Team
@@ -1345,5 +1372,21 @@ namespace MattermostDriver
 	{
 		[JsonProperty(PropertyName = "users")]
 		public List<User> Users { get; set; }
+	}
+
+	public class WebrtcInfoResponse
+	{
+		[JsonProperty(PropertyName = "token")]
+		public string Token { get; set; }
+		[JsonProperty(PropertyName = "gateway_url")]
+		public string GatewayUrl { get; set; }
+		[JsonProperty(PropertyName = "stun_uri", NullValueHandling = NullValueHandling.Ignore)]
+		public string StunUri { get; set; }
+		[JsonProperty(PropertyName = "turn_uri", NullValueHandling = NullValueHandling.Ignore)]
+		public string TurnUri { get; set; }
+		[JsonProperty(PropertyName = "turn_password", NullValueHandling = NullValueHandling.Ignore)]
+		public string TurnPassword { get; set; }
+		[JsonProperty(PropertyName = "turn_username", NullValueHandling = NullValueHandling.Ignore)]
+		public string TurnUsername { get; set; }
 	}
 }

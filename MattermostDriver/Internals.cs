@@ -118,4 +118,9 @@ namespace MattermostDriver
 	{
 		public bool exists;
 	}
+
+	internal class Token
+	{
+		public string token;
+	}
 }

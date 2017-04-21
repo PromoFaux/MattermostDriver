@@ -1099,26 +1099,6 @@ namespace MattermostDriver
 		#endregion
 
 		#region Post Methods
-		// CreatePost creates a post based on the provided post struct.
-		[ApiRoute("/posts", RequestType.POST)]
-		public Post CreatePost(Post newPost)
-		{
-			return APIPost<Post>($"/posts", newPost);
-		}
-
-		[ApiRoute("/posts/{post_id}", RequestType.PUT)]
-		public Post UpdatePost(string team_id, string channel_id, Post post)
-		{
-			throw new NotImplementedException();
-			return APIPut<Post>($"/teams/{team_id}/channels/{channel_id}/posts/update", post);
-		}
-
-		[ApiRoute("/posts/{post_id}/patch", RequestType.PUT)]
-		public Post UpdatePost(string team_id, string channel_id, string post_id)
-		{
-			throw new NotImplementedException();
-		}
-
 		// GetPostsForChannel gets a page of posts with an array for ordering for a channel.
 		[ApiRoute("/channels/{channel_id}/posts", RequestType.GET)]
 		public PostList GetPosts(string channel_id, int page, int per_page)//, long since = 0, string before = "", string after = "")
@@ -1134,42 +1114,15 @@ namespace MattermostDriver
 			//	options.Add("before", before);
 			//if (!string.IsNullOrWhiteSpace(after))
 			//	options.Add("after", after);
-			return APIGet<PostList>($"/channels/{channel_id}/posts");
+			return APIGet<PostList>($"/channels/{channel_id}/posts", options);
 		}
 
-		[ApiRoute("/posts/{post_id}", RequestType.DELETE)]
-		public void DeletePost(string post_id)
+		// CreatePost creates a post based on the provided post struct.
+		[ApiRoute("/posts", RequestType.POST)]
+		public Post CreatePost(Post newPost)
 		{
-			throw new NotImplementedException();
-			APIDelete($"/posts/{post_id}");
+			return APIPost<Post>($"/posts", newPost);
 		}
-
-		[ApiRoute("/posts/search", RequestType.POST)]
-		public PostList SearchPosts(string terms, bool is_or_search)
-		{
-			throw new NotImplementedException();
-			var obj = new { terms = terms, is_or_search = is_or_search };
-			return APIPost<PostList>($"/posts/search", obj);
-		}
-
-		[ApiRoute("/posts/flagged", RequestType.GET)]
-		public PostList GetFlaggedPosts(string in_team = "", string in_channel = "")
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>();
-			if (!string.IsNullOrWhiteSpace(in_team))
-				options.Add("in_team", in_team);
-			if (!string.IsNullOrWhiteSpace(in_channel))
-				options.Add("in_channel", in_channel);
-
-			if (options.Count == 0)
-				return APIGet<PostList>($"/posts/flagged");
-			else
-				return APIGet<PostList>($"/posts/flagged", options);
-		}
-
-		//Not implemented
-		//[ApiRoute("/posts/{post_id}/files/info", RequestType.GET)]
 
 		// GetPost gets a single post.
 		[ApiRoute("/posts/{post_id}", RequestType.GET)]
@@ -1178,361 +1131,563 @@ namespace MattermostDriver
 			return APIGet<Post>($"/posts/{post_id}");
 		}
 
+		// UpdatePost updates a post based on the provided post struct.
+		[ApiRoute("/posts/{post_id}", RequestType.PUT)]
+		public Post UpdatePost(Post post)
+		{
+			return APIPut<Post>($"/posts/{post.ID}", post);
+		}
+
+		// DeletePost deletes a post from the provided post id string.
+		[ApiRoute("/posts/{post_id}", RequestType.DELETE)]
+		public void DeletePost(string post_id)
+		{
+			APIDelete($"/posts/{post_id}");
+		}
+
+		// PatchPost partially updates a post. Any missing fields are not updated.
+		[ApiRoute("/posts/{post_id}/patch", RequestType.PUT)]
+		public Post UpdatePost(string post_id, bool is_pinned = false, List<string> file_ids = null, bool has_reactions = false)
+		{
+			var obj = new { is_pinned = is_pinned, file_ids = file_ids, has_reactions = has_reactions };
+			return APIPut<Post>($"/posts/{post_id}/patch", obj);
+		}
+
+		// PinPost pin a post based on provided post id string.
+		[ApiRoute("/posts/{post_id}/pin", RequestType.POST)]
+		public void PinPost(string post_id)
+		{
+			APIPost<StatusOK>($"/posts/{post_id}/pin", null);
+		}
+
 		// GetPostThread gets a post with all the other posts in the same thread.
 		[ApiRoute("/posts/{post_id}/thread", RequestType.GET)]
 		public PostList GetPostThread(string post_id)
 		{
 			return APIGet<PostList>($"/posts/{post_id}/thread");
 		}
-		#endregion
+
+		// UnpinPost unpin a post based on provided post id string.
+		[ApiRoute("/posts/{post_id}/unpin", RequestType.POST)]
+		public void UnpinPost(string post_id)
+		{
+			APIPost<StatusOK>($"/posts/{post_id}/unpin", null);
+		}
+
+		// SearchPosts returns any posts with matching terms string.
+		[ApiRoute("/teams/{team_id}/posts/search", RequestType.POST)]
+		public PostList SearchPosts(string team_id, string terms, bool is_or_search)
+		{
+			var obj = new { terms = terms, is_or_search = is_or_search };
+			return APIPost<PostList>($"/teams/{team_id}/posts/search", obj);
+		}
+
+		// GetFlaggedPostsForUser returns flagged posts of a user [in a team/channel] based on user id string.
+		[ApiRoute("/users/{user_id}/posts/flagged", RequestType.GET)]
+		public PostList GetFlaggedPostsForUser(string user_id, string in_team = "", string in_channel = "")
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>();
+			if (!string.IsNullOrWhiteSpace(in_team))
+				options.Add("in_team", in_team);
+			else if (!string.IsNullOrWhiteSpace(in_channel))
+				options.Add("in_channel", in_channel);
+
+			if (options.Count == 0)
+				return APIGet<PostList>($"/users/{user_id}/posts/flagged");
+			else
+				return APIGet<PostList>($"/users/{user_id}/posts/flagged", options);
+		}
 
 		//Not implemented
-		//[ApiRoute("/files", RequestType.POST)]
-		//[ApiRoute("/files/{file_id}", RequestType.GET)]
-		//[ApiRoute("/files/{file_id}/thumbnail", RequestType.GET)]
-		//[ApiRoute("/files/{file_id}/preview", RequestType.GET)]
-		//[ApiRoute("/files/{file_id}/info", RequestType.GET)]
-		//[ApiRoute("/files/{file_id}/link", RequestType.GET)]
+		//[ApiRoute("/posts/{post_id}/files/info", RequestType.GET)]
+		#endregion
 
 		#region Preference Methods
-		[ApiRoute("/users/{user_id}/preferences/save", RequestType.POST)]
-		public void UpdatePreferences(string user_id, List<Preference> preferences)
-		{
-			throw new NotImplementedException();
-			APIPost<StatusOK>($"/users/{user_id}/preferences/save", preferences);
-		}
-
+		// GetPreferences returns the user's preferences.
 		[ApiRoute("/users/{user_id}/preferences", RequestType.GET)]
-		public List<Preference> GetPreferences(string user_id, int page, int per_page)
+		public List<Preference> GetPreferences(string user_id)
 		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>
-			{
-				{ "page", page.ToString() },
-				{ "per_page", per_page.ToString() }
-			};
+			return APIGet<List<Preference>>($"/users/{user_id}/preferences");
 		}
 
+		// UpdatePreferences saves the user's preferences.
+		[ApiRoute("/users/{user_id}/preferences", RequestType.PUT)]
+		public bool UpdatePreferences(string user_id, List<Preference> preferences)
+		{
+			return APIPut<bool>($"/users/{user_id}/preferences", preferences);
+		}
+
+		// DeletePreferences deletes the user's preferences.
+		[ApiRoute("/users/{user_id}/preferences/delete", RequestType.POST)]
+		public bool DeletePreferences(string user_id, List<Preference> preferences)
+		{
+			return APIPost<bool>($"/users/{user_id}/preferences/delete", preferences);
+		}
+
+		// GetPreferencesByCategory returns the user's preferences from the provided category string.
 		[ApiRoute("/users/{user_id}/preferences/{category}", RequestType.GET)]
 		public List<Preference> GetPreferences(string user_id, string category)
 		{
-			throw new NotImplementedException();
 			return APIGet<List<Preference>>($"/users/{user_id}/preferences/{category}");
 		}
 
-		[ApiRoute("/users/{user_id}/preferences/{category}/{name}", RequestType.GET)]
+		// GetPreferenceByCategoryAndName returns the user's preferences from the provided category and preference name string.
+		[ApiRoute("/users/{user_id}/preferences/{category}/name/{name}", RequestType.GET)]
 		public Preference GetPreference(string user_id, string category, string name)
 		{
-			throw new NotImplementedException();
-			return APIGet<Preference>($"/users/{user_id}/preferences/{category}/{name}");
-		}
-
-		[ApiRoute("/users/{user_id}/preferences/{category}/{name}", RequestType.DELETE)]
-		public void DeletePreference(string user_id, string category, string name)
-		{
-			throw new NotImplementedException();
-			APIDelete($"/users/{user_id}/preferences/{category}/{name}");
+			return APIGet<Preference>($"/users/{user_id}/preferences/{category}/name/{name}");
 		}
 		#endregion
 
 		#region System Methods
-		[ApiRoute("/system/client/config", RequestType.GET)]
-		public void GetConfig()
+		// GetAudits returns a list of audits for the whole system.
+		[ApiRoute("/audits", RequestType.GET)]
+		public List<Audit> GetAudits(int page, int per_page)
 		{
-			throw new NotImplementedException();
-			APIGet<StatusOK>("/system/client/config");
+			Dictionary<string, string> options = new Dictionary<string, string>
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+			return APIGet<List<Audit>>("/audits", options);
 		}
 
-		[ApiRoute("/system/log", RequestType.POST)]
-		public void CreateSystemLogEntry(string log)
+		// InvalidateCaches will purge the cache and can affect the performance while is cleaning.
+		[ApiRoute("/caches/invalidate", RequestType.POST)]
+		public void InvalidateCaches()
 		{
-			throw new NotImplementedException();
-			APIPost<StatusOK>("/system/log", null);
+			APIPost<StatusOK>("/caches/invalidate", null);
 		}
 
+		// GetConfig will retrieve the server config with some sanitized items.
+		[ApiRoute("/config", RequestType.GET)]
+		public Config GetServerConfig()
+		{
+			return APIGet<Config>("/config");
+		}
+
+		// UpdateConfig will update the server configuration
+		[ApiRoute("/config", RequestType.PUT)]
+		public Config UpdateConfig(Config config)
+		{
+			return APIPut<Config>("/config", config);
+		}
+
+		// ReloadConfig will reload the server configuration.
+		[ApiRoute("/config/reload", RequestType.POST)]
+		public void ReloadConfig()
+		{
+			APIPost<StatusOK>("/config/reload", null);
+		}
+
+		// DatabaseRecycle will recycle the connections. Discard current connection and get new one.
+		[ApiRoute("/database/recycle", RequestType.POST)]
+		public void DatabaseRecycle()
+		{
+			APIPost<StatusOK>("/database/recycle", null);
+		}
+
+		// TestEmail will attempt to connect to the configured SMTP server.
+		[ApiRoute("/email/test", RequestType.POST)]
+		public void TestEmail()
+		{
+			APIPost<StatusOK>("/email/test", null);
+		}
+
+		// GetLogs page of logs as a string array.
+		[ApiRoute("/logs", RequestType.GET)]
+		public List<string> GetLogs(int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+			return APIGet<List<string>>("/logs", options);
+		}
+
+		// PostLog is a convenience Web Service call so clients can log messages into
+		// the server-side logs.  For example we typically log javascript error messages
+		// into the server-side.  It returns the log message if the logging was successful.
+		[ApiRoute("/logs", RequestType.POST)]
+		public void PostLog(string log, string level)
+		{
+			var obj = new { level = level, message = log };
+			APIPost<string>("/logs", obj);
+		}
+
+		// GetPing will ping the server and to see if it is up and running.
 		[ApiRoute("/system/ping", RequestType.GET)]
 		public void Ping()
 		{
-			throw new NotImplementedException();
 			APIGet<StatusOK>("/system/ping");
 		}
 		#endregion
 
-		#region Admin Methods
-		[ApiRoute("/admin/logs", RequestType.GET)]
-		public List<string> GetLogs(int page, int per_page)
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>
-			{
-				{ "page", page.ToString() },
-				{ "per_page", per_page.ToString() }
-			};
-			return APIGet<List<string>>("/admin/logs", options);
-		}
-
-		[ApiRoute("/admin/audits", RequestType.GET)]
-		public List<Audit> GetAudits(int page, int per_page)
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>
-			{
-				{ "page", page.ToString() },
-				{ "per_page", per_page.ToString() }
-			};
-			return APIGet<List<Audit>>("/admin/audits", options);
-		}
-
-		[ApiRoute("/admin/config", RequestType.GET)]
-		public Config GetAdminConfig()
-		{
-			throw new NotImplementedException();
-			return APIGet<Config>("/admin/config");
-		}
-
-		[ApiRoute("/admin/config", RequestType.PUT)]
-		public Config UpdateConfig(Config config)
-		{
-			throw new NotImplementedException();
-			return APIPut<Config>("/admin/config", config);
-		}
-
-		[ApiRoute("/admin/config/reload", RequestType.POST)]
-		public void ReloadConfig()
-		{
-			throw new NotImplementedException();
-			APIPost<StatusOK>("/admin/config/reload", null);
-		}
-
-		[ApiRoute("/admin/caches/invalidate", RequestType.GET)]
-		public void InvalidateCaches()
-		{
-			throw new NotImplementedException();
-			APIGet<StatusOK>("/admin/caches/invalidate");
-		}
-
-		//Not implemented
-		//[ApiRoute("/admin/email/test", RequestType.POST)]
-
-		[ApiRoute("/admin/database/recycle", RequestType.POST)]
-		public void RecycleDBConn()
-		{
-			throw new NotImplementedException();
-			APIPost<StatusOK>("/admin/database/recycle", null);
-		}
-
-		[ApiRoute("/admin/analytics/{type}", RequestType.GET)]
-		public List<Analytic> GetAnalytics(string type, string team_id = "")
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>();
-			if (!string.IsNullOrWhiteSpace(team_id))
-				options.Add("team_id", team_id);
-
-			if (options.Count == 0)
-				return APIGet<List<Analytic>>($"/admin/analytics/{type}");
-			else
-				return APIGet<List<Analytic>>($"/admin/analytics/{type}", options);
-		}
-
-		//Not implemented
-		//[ApiRoute("/admin/compliance/reports", RequestType.POST)]
-		//[ApiRoute("/admin/compliance/reports/{report_id}", RequestType.GET)]
-		//[ApiRoute("/admin/compliance/reports", RequestType.GET)]
-		//[ApiRoute("/admin/compliance/reports/{report_id}/download", RequestType.GET)]
-		//[ApiRoute("/admin/brand/image", RequestType.POST)]
-		//[ApiRoute("/admin/brand/image", RequestType.GET)]
-
-		[ApiRoute("/admin/users/{user_id}/mfa/reset", RequestType.POST)]
-		public void ResetUserMFA(string user_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/admin/users/{user_id}/password/reset", RequestType.POST)]
-		public void ResetPassword(string user_id, string new_password)
-		{
-			throw new NotImplementedException();
-		}
-
-		//Not Implemented
-		//[ApiRoute("/admin/ldap/sync", RequestType.POST)]
-		//[ApiRoute("/admin/ldap/test", RequestType.POST)]
-		//[ApiRoute("/admin/saml/metadata", RequestType.GET)]
-		//[ApiRoute("/admin/saml/certificate", RequestType.POST)]
-		//[ApiRoute("/admin/saml/certificate", RequestType.DELETE)]
-		//[ApiRoute("/admin/saml/certificate/status", RequestType.GET)]
-		//[ApiRoute("/admin/cluster/status", RequestType.GET)]
-		//[ApiRoute("/admin/users/recent", RequestType.GET)]
-		#endregion
-
 		#region Command methods
+		// CreateCommand will create a new command if the user have the right permissions.
 		[ApiRoute("/commands", RequestType.POST)]
-		public void CreateCommand()
+		public Command CreateCommand(Command command)
 		{
-			throw new NotImplementedException();
+			return APIPost<Command>("/commands", command);
 		}
 
-		[ApiRoute("/commands/{command_id}", RequestType.PUT)]
-		public void UpdateCommand(string command_id)
+		// ListCommands will retrieve a list of commands available in the team.
+		[ApiRoute("/commands", RequestType.GET)]
+		public List<Command> ListCommands(string team_id, bool custom_only = false)
 		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/commands", RequestType.GET)]
-		public void GetCommands(string team_id, bool custom_only = false)
-		{
-			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>
 			{
+				{ "team_id", team_id },
 				{ "custom_only", custom_only.ToString() }
 			};
+			return APIGet<List<Command>>($"/commands", options);
 		}
 
-		[ApiRoute("/commands/{command_id}/regen_token", RequestType.POST)]
-		public void RegerateCommandToken(string command_id)
+		// UpdateCommand updates a command based on the provided Command struct
+		[ApiRoute("/commands/{command_id}", RequestType.PUT)]
+		public Command UpdateCommand(Command command)
 		{
-			throw new NotImplementedException();
+			return APIPut<Command>($"/commands/{command.ID}", command);
 		}
 
+		// DeleteCommand deletes a command based on the provided command id string
 		[ApiRoute("/commands/{command_id}", RequestType.DELETE)]
 		public void DeleteCommand(string command_id)
 		{
-			throw new NotImplementedException();
+			APIDelete($"/commands/{command_id}");
 		}
 
-		[ApiRoute("/commands/execute", RequestType.POST)]
-		public void ExecuteCommand()
+		// RegenCommandToken will create a new token if the user have the right permissions.
+		[ApiRoute("/commands/{command_id}/regen_token", RequestType.PUT)]
+		public string RegerateCommandToken(string command_id)
 		{
-			throw new NotImplementedException();
+			return APIPut<Token>($"/commands/{command_id}/regen_token", null).token;
+		}
+
+		// ListCommands will retrieve a list of commands available in the team.
+		[ApiRoute("/teams/{team_id}/commands/autocomplete", RequestType.GET)]
+		public List<Command> AutoCompleteCommands(string team_id)
+		{
+			return APIGet<List<Command>>($"/teams/{team_id}/commands/autocomplete");
 		}
 		#endregion
 
 		#region Webhook Methods
+		// CreateIncomingWebhook creates an incoming webhook for a channel.
 		[ApiRoute("/hooks/incoming", RequestType.POST)]
-		public void CreateIncomingWebhook()
+		public IncomingWebook CreateIncomingWebhook(IncomingWebook hook)
 		{
-			throw new NotImplementedException();
+			return APIPost<IncomingWebook>("/hooks/incoming", hook);
 		}
 
+		// GetIncomingWebhooks returns a page of incoming webhooks on the system. Page counting starts at 0.
 		[ApiRoute("/hooks/incoming", RequestType.GET)]
-		public void GetIncomingWebhooks(int page, int per_page)
+		public List<IncomingWebook> GetIncomingWebhooks(int page, int per_page, string team_id = "")
 		{
-			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>
 			{
 				{ "page", page.ToString() },
 				{ "per_page", per_page.ToString() }
 			};
+			if (!string.IsNullOrWhiteSpace(team_id))
+				options.Add("team_id", team_id);
+
+			return APIGet<List<IncomingWebook>>("/hooks/incoming", options);
 		}
 
-		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.PUT)]
-		public void UpdateIncomingWebhook(string hook_id)
+		// GetIncomingWebhook returns an Incoming webhook given the hook ID
+		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.GET)]
+		public IncomingWebook GetIncomingWebhook(string hook_id)
 		{
-			throw new NotImplementedException();
+			return APIGet<IncomingWebook>($"/hooks/incoming/{hook_id}");
 		}
 
+		// UpdateIncomingWebhook updates an incoming webhook for a channel.
+		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.PUT)]
+		public IncomingWebook UpdateIncomingWebhook(IncomingWebook hook)
+		{
+			return APIPut<IncomingWebook>($"/hooks/incoming/{hook.ID}", hook);
+		}
+
+		// DeleteIncomingWebhook deletes and Incoming Webhook given the hook ID
 		[ApiRoute("/hooks/incoming/{hook_id}", RequestType.DELETE)]
 		public void DeleteIncomingWebhook(string hook_id)
 		{
-			throw new NotImplementedException();
+			APIDelete($"/hooks/incoming/{hook_id}");
 		}
 
+		// CreateOutgoingWebhook creates an outgoing webhook for a team or channel.
 		[ApiRoute("/hooks/outgoing", RequestType.POST)]
-		public void CreateOutgoingWebhook()
+		public OutgoingWebhook CreateOutgoingWebhook(OutgoingWebhook hook)
 		{
-			throw new NotImplementedException();
+			return APIPost<OutgoingWebhook>("/hooks/outgoing", hook);
 		}
 
+		// GetOutgoingWebhooks returns a page of outgoing webhooks on the system. Page counting starts at 0.
 		[ApiRoute("/hooks/outgoing", RequestType.GET)]
-		public void GetOutgoingWebhooks(int page, int per_page)
+		public List<OutgoingWebhook> GetOutgoingWebhooks(int page, int per_page, string team_id = "", string channel_id = "")
 		{
-			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>
 			{
 				{ "page", page.ToString() },
 				{ "per_page", per_page.ToString() }
 			};
+			if (!string.IsNullOrWhiteSpace(team_id))
+				options.Add("team_id", team_id);
+			else if (!string.IsNullOrWhiteSpace(channel_id))
+				options.Add("channel_id", channel_id);
+
+			return APIGet<List<OutgoingWebhook>>("/hooks/outgoing", options);
 		}
 
-		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.PUT)]
-		public void UpdateOutgoingWebhook(string hook_id)
+		// GetOutgoingWebhook outgoing webhooks on the system requested by Hook Id.
+		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.GET)]
+		public OutgoingWebhook GetOutgoingWebhook(string hook_id)
 		{
-			throw new NotImplementedException();
+			return APIGet<OutgoingWebhook>($"/hooks/outgoing/{hook_id}");
 		}
 
+		// UpdateOutgoingWebhook creates an outgoing webhook for a team or channel.
+		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.PUT)]
+		public OutgoingWebhook UpdateOutgoingWebhook(OutgoingWebhook hook)
+		{
+			return APIPut<OutgoingWebhook>($"/hooks/outgoing/{hook.ID}", hook);
+		}
+
+		// DeleteOutgoingWebhook delete the outgoing webhook on the system requested by Hook Id.
 		[ApiRoute("/hooks/outgoing/{hook_id}", RequestType.DELETE)]
 		public void DeleteOutgoingWebhook(string hook_id)
 		{
-			throw new NotImplementedException();
+			APIDelete($"/hooks/outgoing/{hook_id}");
 		}
 
+		// RegenOutgoingHookToken regenerate the outgoing webhook token.
 		[ApiRoute("/hooks/outgoing/{hook_id}/regen_token", RequestType.POST)]
-		public void RegenerateOutgoingWebhookToken(string hook_id)
+		public OutgoingWebhook RegenerateOutgoingWebhookToken(string hook_id)
 		{
-			throw new NotImplementedException();
+			return APIPost<OutgoingWebhook>($"/hooks/outgoing/{hook_id}/regen_token", null);
 		}
 		#endregion
 
 		#region Status Methods
+		// GetUsersStatusesByIds returns a list of users status based on the provided user ids.
 		[ApiRoute("/users/status/ids", RequestType.POST)]
-		public void GetUserStatuses(List<string> ids)
+		public List<UserStatus> GetUserStatuses(List<string> user_ids)
 		{
-			throw new NotImplementedException();
+			return APIPost<List<UserStatus>>("/users/status/ids", user_ids);
 		}
 
+		// GetUserStatus returns a user based on the provided user id string.
 		[ApiRoute("/users/{user_id}/status", RequestType.GET)]
-		public void GetUserStatus(string user_id)
+		public UserStatus GetUserStatus(string user_id)
 		{
-			throw new NotImplementedException();
+			return APIGet<UserStatus>($"/users/{user_id}/status");
 		}
-		
+
+		// UpdateUserStatus sets a user's status based on the provided user id string.
 		[ApiRoute("/users/{user_id}/status", RequestType.PUT)]
-		public void UpdateUserStatus(string user_id)
+		public UserStatus UpdateUserStatus(string user_id, UserStatus status)
 		{
-			throw new NotImplementedException();
+			return APIPut<UserStatus>($"/users/{user_id}/status", status);
 		}
 		#endregion
-
-		//Not implemented
-		//[ApiRoute("/emoji", RequestType.POST)]
-		//[ApiRoute("/emoji", RequestType.GET)]
-		//[ApiRoute("/emoji/{emoji_id}/image", RequestType.GET)]
-		//[ApiRoute("/emoji/{emoji_id}", RequestType.DELETE)]
 
 		#region Reaction Methods
+		// SaveReaction saves an emoji reaction for a post. Returns the saved reaction if successful, otherwise an error will be returned.
 		[ApiRoute("/reactions", RequestType.POST)]
-		public void CreateReaction()
+		public Reaction CreateReaction(Reaction reaction)
 		{
-			throw new NotImplementedException();
+			return APIPost<Reaction>("/reactions", reaction);
 		}
 
-		[ApiRoute("/users/{user_id}/posts/{post_id}/reactions/{name}", RequestType.DELETE)]
-		public void DeleteReaction(string user_id, string post_id, string name)
-		{
-			throw new NotImplementedException();
-		}
-
+		// GetReactions returns a list of reactions to a post.
 		[ApiRoute("/posts/{post_id}/reactions", RequestType.GET)]
-		public void GetReactions(string post_id)
+		public List<Reaction> GetReactions(string post_id)
 		{
-			throw new NotImplementedException();
+			return APIGet<List<Reaction>>($"/posts/{post_id}/reactions");
+		}
+		#endregion
+
+		#region Emoji Methods
+		// GetEmojiList returns a list of custom emoji in the system.
+		[ApiRoute("/emoji", RequestType.GET)]
+		public List<Emoji> GetEmojiList()
+		{
+			return APIGet<List<Emoji>>("/emoji");
+		}
+
+		// DeleteEmoji delete an custom emoji on the provided emoji id string.
+		[ApiRoute("/emoji/{emoji_id}", RequestType.DELETE)]
+		public void DeleteEmoji(string emoji_id)
+		{
+			APIDelete($"/emoji/{emoji_id}");
+		}
+
+		[ApiRoute("/emoji/{emoji_id}", RequestType.GET)]
+		public Emoji GetEmoji(string emoji_id)
+		{
+			return APIGet<Emoji>($"/emoji/{emoji_id}");
+		}
+		#endregion
+
+		#region LDAP Methods
+		// SyncLdap will force a sync with the configured LDAP server.
+		[ApiRoute("/ldap/sync", RequestType.POST)]
+		public void SyncLdap()
+		{
+			APIPost<StatusOK>("/ldap/sync", null);
+		}
+
+		// TestLdap will attempt to connect to the configured LDAP server and return OK if configured
+		// correctly.
+		[ApiRoute("/ldap/test", RequestType.POST)]
+		public void TestLdap()
+		{
+			APIPost<StatusOK>("/ldap/test", null);
+		}
+		#endregion
+
+		#region OAuth Methods
+		// GetOAuthApps gets a page of registered OAuth 2.0 client applications with Mattermost acting as an OAuth 2.0 service provider.
+		[ApiRoute("/oauth/apps", RequestType.GET)]
+		public List<OAuthApp> GetOAuthApps(int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{
+					"page", page.ToString()
+				},
+				{
+					"per_page", per_page.ToString()
+				}
+			};
+			return APIGet<List<OAuthApp>>("/oauth/apps", options);
+		}
+
+		// CreateOAuthApp will register a new OAuth 2.0 client application with Mattermost acting as an OAuth 2.0 service provider.
+		[ApiRoute("/oauth/apps", RequestType.POST)]
+		public OAuthApp CreateOAuthApp(OAuthApp app)
+		{
+			return APIPost<OAuthApp>("/oauth/apps", app);
+		}
+
+		// DeleteOAuthApp deletes a registered OAuth 2.0 client application.
+		[ApiRoute("/oauth/apps/{app_id}", RequestType.DELETE)]
+		public void DeleteOAuthApp(string app_id)
+		{
+			APIDelete($"/oauth/apps/{app_id}");
+		}
+
+		// GetOAuthApp gets a registered OAuth 2.0 client application with Mattermost acting as an OAuth 2.0 service provider.
+		[ApiRoute("/oauth/apps/{app_id}", RequestType.GET)]
+		public OAuthApp GetOAuthApp(string app_id)
+		{
+			return APIGet<OAuthApp>($"/oauth/apps/{app_id}");
+		}
+
+		// GetOAuthAppInfo gets a sanitized version of a registered OAuth 2.0 client application with Mattermost acting as an OAuth 2.0 service provider.
+		[ApiRoute("/oauth/apps/{app_id}/info", RequestType.GET)]
+		public OAuthApp GetOAuthAppInfo(string app_id)
+		{
+			return APIGet<OAuthApp>($"/oauth/apps/{app_id}/info");
+		}
+
+		// RegenerateOAuthAppSecret regenerates the client secret for a registered OAuth 2.0 client application.
+		[ApiRoute("/oauth/apps/{app_id}/regen_secret", RequestType.POST)]
+		public OAuthApp RegenerateOAuthAppSecret(string app_id)
+		{
+			return APIPost<OAuthApp>($"/oauth/apps/{app_id}/regen_secret", null);
+		}
+
+		// GetAuthorizedOAuthAppsForUser gets a page of OAuth 2.0 client applications the user has authorized to use access their account.
+		[ApiRoute("/users/{user_id}/oauth/apps/authorized", RequestType.GET)]
+		public List<OAuthApp> GetAuthorizedOAuthAppsForUser(string user_id, int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{
+					"page", page.ToString()
+				},
+				{
+					"per_page", per_page.ToString()
+				}
+			};
+			return APIGet<List<OAuthApp>>($"/users/{user_id}/oauth/apps/authorized", options);
+		}
+		#endregion
+
+		#region SAML Methods
+		// DeleteSamlIdpCertificate deletes the SAML IDP certificate from the server and updates the config to not use it and disable SAML.
+		[ApiRoute("/saml/certificate/idp", RequestType.DELETE)]
+		public void DeleteSamlIdpCertificate()
+		{
+			APIDelete("/saml/certificate/public");
+		}
+
+		// DeleteSamlPublicCertificate deletes the SAML IDP certificate from the server and updates the config to not use it and disable SAML.
+		[ApiRoute("/saml/certificate/public", RequestType.DELETE)]
+		public void DeleteSamlPublicCertificate()
+		{
+			APIDelete("/saml/certificate/public");
+		}
+
+		// DeleteSamlPrivateCertificate deletes the SAML IDP certificate from the server and updates the config to not use it and disable SAML.
+		[ApiRoute("/saml/certificate/private", RequestType.DELETE)]
+		public void DeleteSamlPrivateCertificate()
+		{
+			APIDelete("/saml/certificate/public");
+		}
+
+		// GetSamlCertificateStatus returns metadata for the SAML configuration.
+		[ApiRoute("/saml/certificate/status", RequestType.GET)]
+		public SamlCertificateStatus GetSamlCertificateStatus()
+		{
+			return APIGet<SamlCertificateStatus>("/saml/certificate/status");
+		}
+
+		// GetSamlMetadata returns metadata for the SAML configuration.
+		[ApiRoute("/saml/metadata", RequestType.GET)]
+		public string GetSamlMetadata()
+		{
+			return APIGet<string>("/saml/metadata");
+		}
+		#endregion
+
+		#region Webrtc Methods
+		// GetWebrtcToken returns a valid token, stun server and turn server with credentials to
+		// use with the Mattermost WebRTC service.
+		[ApiRoute("/webrtc/token", RequestType.GET)]
+		public WebrtcInfoResponse GetWebrtcToken()
+		{
+			return APIGet<WebrtcInfoResponse>("/webrtc/token");
 		}
 		#endregion
 
 		//Not implemented
-		//[ApiRoute("/oauth/apps", RequestType.POST)]
-		//[ApiRoute("/oauth/apps", RequestType.GET)]
-		//[ApiRoute("/oauth/apps/{client_id}", RequestType.GET)]
-		//[ApiRoute("/oauth/apps/{client_id}", RequestType.DELETE)]
-		//[ApiRoute("/oauth/apps/{client_id}/regen_secret", RequestType.POST)]
-		//[ApiRoute("/users/{user_id}/oauth/apps/{client_id}/authorize", RequestType.POST)]
-		//[ApiRoute("/users/{user_id}/oauth/apps/authorized", RequestType.GET)]
-		//[ApiRoute("/users/{user_id}/oauth/apps/{client_id}/deauthorize", RequestType.POST)]
-		//Use Connect() instead: [ApiRoute("/websocket"), RequestType.GET)]
-		//[ApiRoute("/webrtc/token", RequestType.GET)]
+		//[ApiRoute("/brand/image", RequestType.GET)] - image support needed
+		//[ApiRoute("/brand/image", RequestType.POST)] - image support needed
+		//[ApiRoute("/cluster/status", RequestType.GET)] - need to test received clusterinfo struct
+		//[ApiRoute("/compliance/reports", RequestType.POST)] - file support needed
+		//[ApiRoute("/compliance/reports/{report_id}", RequestType.GET)] - file support needed
+		//[ApiRoute("/compliance/reports", RequestType.GET)] - file support needed
+		//[ApiRoute("/compliance/reports/{report_id}/download", RequestType.GET)] - file support needed
+		//[ApiRoute("/emoji", RequestType.POST)] - image support needed
+		//[ApiRoute("/emoji/{emoji_id}/image", RequestType.GET)] - image support needed
+		//[ApiRoute("/files", RequestType.POST)] - file support needed
+		//[ApiRoute("/files/{file_id}", RequestType.GET)] - file support needed
+		//[ApiRoute("/files/{file_id}/thumbnail", RequestType.GET)] - file support needed
+		//[ApiRoute("/files/{file_id}/preview", RequestType.GET)] - file support needed
+		//[ApiRoute("/files/{file_id}/info", RequestType.GET)] - file support needed
+		//[ApiRoute("/files/{file_id}/link", RequestType.GET)] - file support needed
+		//[ApiRoute("/files/{file_id}/public", RequestType.GET)] - file support needed
 		//[ApiRoute("/license", RequestType.POST)]
 		//[ApiRoute("/license", RequestType.DELETE)]
 		//[ApiRoute("/license/settings", RequestType.GET)]
+		//[ApiRoute("/saml/certificate/public", RequestType.POST)] - file support needed
+		//[ApiRoute("/saml/certificate/private", RequestType.POST)] - file support needed
+		//[ApiRoute("/saml/certificate/idp", RequestType.POST)] - file support needed
+		//[ApiRoute("/websocket"), RequestType.GET)] - use Connect() instead
+		//[ApiRoute("/webrtc/token", RequestType.GET)]
 	}
 }
