@@ -123,4 +123,10 @@ namespace MattermostDriver
 	{
 		public string token;
 	}
+
+	internal class LogEntry
+	{
+		public string level;
+		public string message;
+	}
 }

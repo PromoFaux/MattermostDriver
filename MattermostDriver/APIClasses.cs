@@ -409,6 +409,7 @@ namespace MattermostDriver
 		public class ServiceSetting
 		{
 			public string SiteURL;
+			public string LicenseFileLocation;
 			public string ListenAddress;
 			public string ConnectionSecurity;
 			public string TLSCertFile;
@@ -419,7 +420,6 @@ namespace MattermostDriver
 			public int ReadTimeout;
 			public int WriteTimeout;
 			public int MaximumLoginAttempts;
-			public string SegmentDeveloperKey;
 			public string GoogleDeveloperKey;
 			public bool EnableOAuthServiceProvider;
 			public bool EnableIncomingWebhooks;
@@ -428,22 +428,30 @@ namespace MattermostDriver
 			public bool EnableOnlyAdminIntegrations;
 			public bool EnablePostUsernameOverride;
 			public bool EnablePostIconOverride;
+			public bool EnableLinkPreviews;
 			public bool EnableTesting;
 			public bool EnableDeveloper;
 			public bool EnableSecurityFixAlert;
 			public bool EnableInsecureOutgoingConnections;
 			public bool EnableMultifactorAuthentication;
 			public bool EnforceMultifactorAuthentication;
-			public bool AllowCorsFrom;
+			public string AllowCorsFrom;
 			public int SessionLengthWebInDays;
 			public int SessionLengthMobileInDays;
 			public int SessionLengthSSOInDays;
 			public int SessionCacheInMinutes;
 			public int WebsocketSecurePort;
 			public int WebsocketPort;
-			public int WebserverMode;
-			public int EnableCustomEmoji;
+			public string WebserverMode;
+			public bool EnableCustomEmoji;
 			public string RestrictCustomEmojiCreation;
+			public string RestrictPostDelete;
+			public string AllowEditPost;
+			public int PostEditTimeLimit;
+			public int TimeBetweenUserTypingUpdatesMilliseconds;
+			public bool EnablePostSearch;
+			public bool EnableUserTypingMessages;
+			public int ClusterLogTimeoutMilliseconds;
 		}
 
 		public class TeamSetting
@@ -547,6 +555,7 @@ namespace MattermostDriver
 			public bool EnableEmailBatching;
 			public int EmailBatchingBufferSize;
 			public int EmailBatchingInterval;
+			public bool SkipServerCertificateVerification;
 		}
 
 		public class RateLimitSetting
@@ -1235,7 +1244,7 @@ namespace MattermostDriver
 		[JsonProperty(PropertyName = "last_activity_at")]
 		public long LastActivityAt { get; set; }
 	}
-
+	
 	public class Team
 	{
 		[JsonProperty(PropertyName = "id")]

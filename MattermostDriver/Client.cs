@@ -40,7 +40,7 @@ namespace MattermostDriver
 		public event ChannelViewedEventHandler ChannelViewed;
 		#endregion
 
-		public Client(string url, ILogger logger)
+		public Client(string url, string port, ILogger logger)
 		{
 			//Setup logging
 			this.logger = logger;
@@ -50,13 +50,13 @@ namespace MattermostDriver
 				url = url.TrimEnd('/');
 
 			//Generate API base url
-			ApiBase = url + "/api/v4";
+			ApiBase = url + (port == "80" || port == "443" ? "" : ":" + port) + "/api/v4";
 
 			//Generate websocket url
 			if (url.StartsWith("https"))
-				WebsocketUrl = "wss" + url.Substring(5) + "/api/v4/users/websocket";
+				WebsocketUrl = "wss" + url.Substring(5) + "/api/v4/websocket";
 			else if (url.StartsWith("http"))
-				WebsocketUrl = "ws" + url.Substring(4) + "/api/v4/users/websocket";
+				WebsocketUrl = "ws" + url.Substring(4) + "/api/v4/websocket";
 			else
 			{
 				logger.Error($"Invalid server URL in Client.ctor(): {url}");
@@ -66,9 +66,15 @@ namespace MattermostDriver
 			socket.Opened += OnWebsocketOpen;
 			socket.MessageReceived += OnWebsocketMessage;
 			socket.Closed += OnWebsocketClose;
+			socket.Error += Socket_Error;
 
 			//Setup REST client
 			client = new RestClient(ApiBase);
+		}
+
+		private void Socket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+		{
+			Console.WriteLine(e.Exception.ToString());
 		}
 
 		#region API
@@ -94,7 +100,7 @@ namespace MattermostDriver
 
 			logger.Debug($"Result: " + result.Content);
 
-			token = result.Headers[1].Value.ToString();
+			token = result.Headers[0].Value.ToString();
 
 			return JsonConvert.DeserializeObject<Self>(result.Content);
 		}
@@ -105,8 +111,10 @@ namespace MattermostDriver
 			request.AddHeader("Content-Type", "application/json");
 			if (!string.IsNullOrWhiteSpace(token))
 				request.AddHeader("Authorization", "Bearer " + token);
+			var obj = JsonConvert.SerializeObject(jsonbody);
 			if (jsonbody != null)
-				request.AddJsonBody(jsonbody);
+				request.AddParameter("application/json", obj, ParameterType.RequestBody);
+
 			var result = client.Execute(request);
 
 			logger.Debug($"Executed Post at endpoint '{endpoint}'.");
@@ -1313,7 +1321,7 @@ namespace MattermostDriver
 		public void PostLog(string log, string level)
 		{
 			var obj = new { level = level, message = log };
-			APIPost<string>("/logs", obj);
+			APIPost<LogEntry>("/logs", obj);
 		}
 
 		// GetPing will ping the server and to see if it is up and running.
