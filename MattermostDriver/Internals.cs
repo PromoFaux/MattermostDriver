@@ -113,4 +113,9 @@ namespace MattermostDriver
 	{
 		public string redirect;
 	}
+
+	internal class Exists
+	{
+		public bool exists;
+	}
 }

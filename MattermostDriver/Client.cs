@@ -696,23 +696,10 @@ namespace MattermostDriver
 		#endregion
 
 		#region Team Methods
-		// CreateTeam creates a team in the system based on the provided team struct.
-		[ApiRoute("/teams", RequestType.POST)]
-        public Team CreateTeam(Team team)
-        {
-            return APIPost<Team>($"/teams", team);
-        }
-		//public Team CreateTeam(string name, string display_name, string type)
-		//{
-		//	throw new NotImplementedException();
-		//	var obj = new { name = name, display_name = display_name, type = type };
-		//	return Post<Team>($"/teams", obj);
-		//}
-
+		// GetAllTeams returns all teams based on permissions.
 		[ApiRoute("/teams", RequestType.GET)]
 		public List<Team> GetTeams(int page, int per_page)
 		{
-			throw new NotImplementedException();
 			Dictionary<string, string> options = new Dictionary<string, string>()
 			{
 				{ "page", page.ToString() },
@@ -720,6 +707,143 @@ namespace MattermostDriver
 			};
 
 			return APIGet<List<Team>>("/teams", options);
+		}
+
+		// CreateTeam creates a team in the system based on the provided team struct.
+		[ApiRoute("/teams", RequestType.POST)]
+		public Team CreateTeam(Team team)
+		{
+			return APIPost<Team>($"/teams", team);
+		}
+
+		// GetTeam returns a team based on the provided team id string.
+		[ApiRoute("/teams/{team_id}", RequestType.GET)]
+		public Team GetTeam(string team_id)
+		{
+			return APIGet<Team>($"/teams/{team_id}");
+		}
+
+		// UpdateTeam will update a team.
+		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
+		public Team UpdateTeam(Team team)
+		{
+			return APIPut<Team>($"/teams/{team.ID}", team);
+		}
+
+		// SoftDeleteTeam deletes the team softly (archive only, not permanent delete).
+		[ApiRoute("/teams/{team_id}", RequestType.DELETE)]
+		public void DeleteTeam(string team_id)
+		{
+			APIDelete("/teams/{team_id}");
+		}
+
+		// GetTeamMembers returns team members based on the provided team id string.
+		[ApiRoute("/teams/{team_id}/members", RequestType.GET)]
+		public List<TeamMember> GetTeamMembers(string team_id, int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return APIGet<List<TeamMember>>($"/teams/{team_id}/members", options);
+		}
+
+		// AddTeamMember adds user to a team and return a team member.
+		[ApiRoute("/teams/{team_id}/members", RequestType.POST)]
+		public TeamMember CreateTeamMember(string team_id, string user_id)
+		{
+			var obj = new TeamMember()
+			{
+				TeamID = team_id,
+				UserID = user_id
+			};
+			return APIPost<TeamMember>($"/teams/{team_id}/members", obj);
+		}
+
+		// AddTeamMembers adds a number of users to a team and returns the team members.
+		[ApiRoute("/teams/{team_id}/members/batch", RequestType.POST)]
+		public List<TeamMember> CreateTeamMembers(string team_id, List<string> user_ids)
+		{
+			List<TeamMember> obj = new List<TeamMember>();
+			foreach (string userid in user_ids)
+			{
+				obj.Add(new TeamMember()
+				{
+					TeamID = team_id,
+					UserID = userid
+				});
+			}
+			return APIPost<List<TeamMember>>($"/teams/{team_id}/members/batch", obj);
+		}
+
+		// GetTeamMembersByIds will return an array of team members based on the
+		// team id and a list of user ids provided. Must be authenticated.
+		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
+		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
+		{
+			return APIPost<List<TeamMember>>($"/teams/{team_id}/members/ids", ids);
+		}
+
+		// GetTeamMember returns a team member based on the provided team and user id strings.
+		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
+		public TeamMember GetTeamMember(string team_id, string user_id)
+		{
+			return APIGet<TeamMember>($"/teams/{team_id}/members/{user_id}");
+		}
+
+		// RemoveTeamMember will remove a user from a team.
+		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.DELETE)]
+		public void DeleteTeamMember(string team_id, string user_id)
+		{
+			APIDelete($"/teams/{team_id}/members/{user_id}");
+		}
+
+		// UpdateTeamMemberRoles will update the roles on a team for a user.
+		[ApiRoute("/teams/{team_id}/members/{user_id}/roles", RequestType.PUT)]
+		public void UpdateTeamMemberRoles(string team_id, string user_id, string roles)
+		{
+			var obj = new { roles = roles };
+			APIPut<StatusOK>($"/teams/{team_id}/members/{user_id}/roles", obj);
+		}
+
+		// PatchTeam partially updates a team. Any missing fields are not updated.
+		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
+		public Team UpdateTeam(string team_id, string display_name = "", string description = "", string company_name = "", string invite_id = "", string allow_open_invite = "")
+		{
+			var obj = new { display_name = display_name, description = description, company_name = company_name, invite_id = invite_id, allow_open_invite = allow_open_invite };
+			return APIPut<Team>($"/teams/{team_id}/patch", obj);
+		}
+
+		// GetTeamStats returns a team stats based on the team id string.
+		// Must be authenticated.
+		[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
+		public TeamStats GetTeamStats(string team_id)
+		{
+			return APIGet<TeamStats>($"/teams/{team_id}/stats");
+		}
+
+		// GetTeamByName returns a team based on the provided team name string.
+		[ApiRoute("/teams/name/{name}", RequestType.GET)]
+		public Team GetTeamByName(string name)
+		{
+			return APIGet<Team>($"/teams/name/{name}");
+		}
+
+		// TeamExists returns true or false if the team exist or not.
+		[ApiRoute("/teams/name/{name}/exists", RequestType.GET)]
+		public bool CheckTeamExists(string name)
+		{
+			return APIGet<Exists>($"/teams/name/{name}/exists").exists;
+		}
+
+		// SearchTeams returns teams matching the provided search term.
+		[ApiRoute("/teams/search", RequestType.POST)]
+		public List<Team> SearchTeams(string term)
+		{
+			var obj = new { term = term };
+			return APIPost<List<Team>>("/teams/search", obj);
 		}
 
 		// GetTeamsForUser returns a list of teams a user is on. Must be logged in as the user
@@ -730,110 +854,47 @@ namespace MattermostDriver
 			return APIGet<List<Team>>($"/users/{user_id}/teams");
 		}
 
-		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
-		public Team UpdateTeam(Team team)
+		// GetTeamMembersForUser returns the team members for a user.
+		[ApiRoute("/users/{user_id}/teams/members", RequestType.GET)]
+		public List<TeamMember> GetTeamMembersForUser(string user_id)
 		{
-			throw new NotImplementedException();
-			return APIPut<Team>($"/teams/{team.ID}", team);
+			return APIGet<List<TeamMember>>($"/users/{user_id}/teams/members");
 		}
 
-		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
-		public Team UpdateTeam(string team_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		// GetTeam returns a team based on the provided team id string.
-		[ApiRoute("/teams/{team_id}", RequestType.GET)]
-		public Team GetTeam(string team_id)
-		{
-			return APIGet<Team>($"/teams/{team_id}");
-		}
-
-		[ApiRoute("/teams/name/{name}", RequestType.GET)]
-		public Team GetTeamByName(string name)
-		{
-			throw new NotImplementedException();
-			return APIGet<Team>($"/teams/name/{name}");
-		}
-
-		[ApiRoute("/teams/search", RequestType.POST)]
-		public List<Team> SearchTeams()
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/unread", RequestType.GET)]
-		public List<MessageCount> GetUnreadsFromTeam(string team_id)
-		{
-			throw new NotImplementedException();
-			return APIGet<List<MessageCount>>($"/teams/{team_id}/unread");
-		}
-
+		// GetTeamsUnreadForUser will return an array with TeamUnread objects that contain the amount
+		// of unread messages and mentions the current user has for the teams it belongs to.
+		// An optional team ID can be set to exclude that team from the results. Must be authenticated.
 		[ApiRoute("/users/{user_id}/teams/unread", RequestType.GET)]
-		public List<MessageCount> GetUnreadsFromAllTeams(string user_id)
+		public List<MessageCount> GetUnreadsFromAllTeams(string user_id, string exclude_team = "")
 		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/invite", RequestType.POST)]
-		public void InviteUserToTeam(string team_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
-		public TeamStats GetTeamStats(string team_id)
-		{
-			throw new NotImplementedException();
-			return APIGet<TeamStats>($"/teams/{team_id}/stats");
-		}
-
-		// GetTeamMember returns a team member based on the provided team and user id strings.
-		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
-		public TeamMember GetTeamMember(string team_id, string user_id)
-		{
-			return APIGet<TeamMember>($"/teams/{team_id}/members/{user_id}");
-		}
-
-		[ApiRoute("/teams/{team_id}/members", RequestType.GET)]
-		public List<TeamMember> GetTeamMembers(string team_id, int page, int per_page)
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>()
+			if (!string.IsNullOrWhiteSpace(exclude_team))
 			{
-				{ "page", page.ToString() },
-				{ "per_page", per_page.ToString() }
-			};
-
-			return APIGet<List<TeamMember>>($"/teams/{team_id}/members");
+				Dictionary<string, string> options = new Dictionary<string, string>()
+				{
+					{ "exclude_team", exclude_team }
+				};
+				return APIGet<List<MessageCount>>($"/users/{user_id}/teams/unread", options);
+			}
+			else
+			{
+				return APIGet<List<MessageCount>>($"/users/{user_id}/teams/unread");
+			}
 		}
 
-		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
-		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
+		// GetTeamUnread will return a TeamUnread object that contains the amount of
+		// unread messages and mentions the user has for the specified team.
+		// Must be authenticated.
+		[ApiRoute("/users/{user_id}/teams/{team_id}/unread", RequestType.GET)]
+		public TeamUnread GetTeamUnread(string team_id, string user_id)
 		{
-			throw new NotImplementedException();
-			return APIPost<List<TeamMember>>($"/teams/{team_id}/members/ids", ids);
+			return APIGet<TeamUnread>($"/users/{user_id}/teams/{team_id}/unread");
 		}
 
-		[ApiRoute("/teams/{team_id}/members", RequestType.POST)]
-		public void CreateTeamMember(string team_id, string invite_id = "", string hash = "", string data = "")
+		// InviteUsersToTeam invite users by email to the team.
+		[ApiRoute("/teams/{team_id}/invite/email", RequestType.POST)]
+		public void InviteUserToTeam(string team_id, List<string> user_emails)
 		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/members/{user_id}/roles", RequestType.POST)]
-		public void UpdateTeamMemberRoles(string team_id, string user_id, string new_roles)
-		{
-			throw new NotImplementedException();
-			var obj = new { team_id = team_id, user_id = user_id, new_roles = new_roles };
-			APIPost<StatusOK>($"/teams/{team_id}/members/{user_id}/roles", obj);
-		}
-
-		[ApiRoute("/teams/name/{name}/exists", RequestType.GET)]
-		public bool CheckTeamExists(string name)
-		{
-			throw new NotImplementedException();
+			APIPost<StatusOK>($"/teams/{team_id}/invite/email", user_emails);
 		}
 
 		// Not implemented
@@ -848,26 +909,11 @@ namespace MattermostDriver
 			return APIPost<Channel>($"/channels", channel);
 		}
 
-		// CreateDirectChannel creates a direct message channel based on the two user
-		// ids provided.
-		[ApiRoute("/channels/direct", RequestType.POST)]
-		public Channel CreateDirectChannel(string userOne, string userTwo)
+		// DeleteChannel deletes channel based on the provided channel id string.
+		[ApiRoute("/channels/{channel_id}", RequestType.DELETE)]
+		public void DeleteChannel(string channel_id)
 		{
-			List<string> userIDs = new List<string>() { userOne, userTwo };
-			return APIPost<Channel>($"/channels/direct", userIDs);
-		}
-
-		[ApiRoute("/teams/{team_id}/channels", RequestType.GET)]
-		public List<Channel> GetChannels(string team_id, int page, int per_page)
-		{
-			throw new NotImplementedException();
-			Dictionary<string, string> options = new Dictionary<string, string>()
-			{
-				{ "page", page.ToString() },
-				{ "per_page", per_page.ToString() }
-			};
-
-			return APIGet<List<Channel>>($"/teams/{team_id}/channels", options);
+			APIDelete($"/channels/{channel_id}");
 		}
 
 		// GetChannel returns a channel based on the provided channel id string.
@@ -877,64 +923,11 @@ namespace MattermostDriver
 			return APIGet<Channel>($"/channels/{channel_id}");
 		}
 
-		// GetChannelByName returns a channel based on the provided channel name and team id strings.
-		[ApiRoute("/teams/{team_id}/channels/name/{channel_name}", RequestType.GET)]
-		public Channel GetChannelByName(string team_id, string channel_name)
-		{
-			return APIGet<Channel>($"/teams/{team_id}/channels/name/{channel_name}");
-		}
-
-		// GetChannelByNameForTeamName returns a channel based on the provided channel name and team name strings.
-		[ApiRoute("/teams/name/{team_name}/channels/name/{channel_name}", RequestType.GET)]
-		public Channel GetChannelByNameForTeamName(string team_name, string channel_name)
-		{
-			return APIGet<Channel>($"/teams/name/{team_name}/channels/name/{channel_name}");
-		}
-
-		[ApiRoute("/channels/ids", RequestType.POST)]
-		public List<Channel> GetChannelsByIDs(List<string> channels)
-		{
-			throw new NotImplementedException();
-			return APIPost<List<Channel>>($"/channels/ids", channels);
-		}
-
+		// UpdateChannel update a channel based on the provided channel struct.
 		[ApiRoute("/channels/{channel_id}", RequestType.PUT)]
 		public Channel UpdateChannel(Channel channel)
 		{
-			throw new NotImplementedException();
-			return APIPost<Channel>($"/channels/{channel.ID}", channel);
-		}
-
-		[ApiRoute("/channels/{channel_id}/patch", RequestType.PUT)]
-		public Channel UpdateChannel(string channel_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/channels/{channel_id}", RequestType.DELETE)]
-		public void DeleteChannel(string channel_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/channels/{channel_id}/unread", RequestType.GET)]
-		public void GetChannelUnreads(string channel_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/channels/{channel_id}/stats", RequestType.GET)]
-		public ChannelStats GetChannelStats(string channel_id)
-		{
-			throw new NotImplementedException();
-			return APIGet<ChannelStats>($"/channels/{channel_id}/stats");
-		}
-
-		// GetChannelMember gets a channel member.
-		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.GET)]
-		public ChannelMember GetChannelMember(string channel_id, string user_id)
-		{
-			return APIGet<ChannelMember>($"/channels/{channel_id}/members/{user_id}");
+			return APIPut<Channel>($"/channels/{channel.ID}", channel);
 		}
 
 		// GetChannelMembers gets a page of channel members.
@@ -950,52 +943,158 @@ namespace MattermostDriver
 			return APIGet<List<ChannelMember>>($"/channels/{channel_id}/members", options);
 		}
 
+		// AddChannelMember adds user to channel and return a channel member.
+		[ApiRoute("/channels/{channel_id}/members", RequestType.POST)]
+		public ChannelMember CreateChannelMember(string channel_id, string user_id)
+		{
+			var obj = new { user_id = user_id };
+			return APIPost<ChannelMember>($"/channels/{channel_id}/members", obj);
+		}
+
+		// GetChannelMembersByIds gets the channel members in a channel for a list of user ids.
+		[ApiRoute("/channels/{channel_id}/members/ids", RequestType.POST)]
+		public List<ChannelMember> GetChannelMembersByIDs(string channel_id, List<string> ids)
+		{
+			return APIPost<List<ChannelMember>>($"/channels/{channel_id}/members/ids", ids);
+		}
+
+		// GetChannelMember gets a channel member.
+		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.GET)]
+		public ChannelMember GetChannelMember(string channel_id, string user_id)
+		{
+			return APIGet<ChannelMember>($"/channels/{channel_id}/members/{user_id}");
+		}
+
+		// RemoveUserFromChannel will delete the channel member object for a user, effectively removing the user from a channel.
+		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.DELETE)]
+		public void DeleteChannelMember(string channel_id, string user_id)
+		{
+			APIDelete($"/channels/{channel_id}/members/{user_id}");
+		}
+
+		// UpdateChannelNotifyProps will update the notification properties on a channel for a user.
+		[ApiRoute("/channels/{channel_id}/members/{user_id}/notify_props", RequestType.PUT)]
+		public void UpdateChannelNotifyProps(string channel_id, string user_id, ChannelMember.NotificationProperties notify_props)
+		{
+			APIPut<StatusOK>($"/channels/{channel_id}/members/{user_id}/notify_props", notify_props);
+		}
+
+		// UpdateChannelRoles will update the roles on a channel for a user.
+		[ApiRoute("/channels/{channel_id}/members/{user_id}/roles", RequestType.PUT)]
+		public void UpdateChannelMemberRoles(string channel_id, string user_id, string roles)
+		{
+			var obj = new { roles = roles };
+			APIPut<StatusOK>($"/channels/{channel_id}/members/{user_id}/roles", obj);
+		}
+
+		// PatchChannel partially updates a channel. Any missing fields are not updated.
+		[ApiRoute("/channels/{channel_id}/patch", RequestType.PUT)]
+		public Channel UpdateChannel(string channel_id, string display_name = "", string name = "", string header = "", string purpose = "")
+		{
+			var obj = new { display_name = display_name, name = name, header = header, purpose = purpose };
+			return APIPut<Channel>($"/channels/{channel_id}/patch", obj);
+		}
+
+		// GetPinnedPosts gets a list of pinned posts.
+		[ApiRoute("/channels/{channel_id}/pinned", RequestType.GET)]
+		public PostList GetPinnedPosts(string channel_id)
+		{
+			return APIGet<PostList>($"/channels/{channel_id}/pinned");
+		}
+
+		// GetChannelStats returns statistics for a channel.
+		[ApiRoute("/channels/{channel_id}/stats", RequestType.GET)]
+		public ChannelStats GetChannelStats(string channel_id)
+		{
+			return APIGet<ChannelStats>($"/channels/{channel_id}/stats");
+		}
+
+		// CreateDirectChannel creates a direct message channel based on the two user
+		// ids provided.
+		[ApiRoute("/channels/direct", RequestType.POST)]
+		public Channel CreateDirectChannel(string userOne, string userTwo)
+		{
+			List<string> userIDs = new List<string>() { userOne, userTwo };
+			return APIPost<Channel>($"/channels/direct", userIDs);
+		}
+
+		// CreateGroupChannel creates a group message channel based on userIds provided
+		[ApiRoute("/channels/group", RequestType.POST)]
+		public Channel CreateGroupChannel(List<string> user_ids)
+		{
+			return APIPost<Channel>("/channels/group", user_ids);
+		}
+
+		// ViewChannel performs a view action for a user. Synonymous with switching channels or marking channels as read by a user.
+		[ApiRoute("/channels/members/{user_id}/view", RequestType.POST)]
+		public void ViewChannel(string user_id, string channel_id, string prev_channel_id)
+		{
+			var obj = new { channel_id = channel_id, prev_channel_id = prev_channel_id };
+			APIPost<StatusOK>($"/channels/members/{user_id}/view", obj);
+		}
+
+		// GetPublicChannelsForTeam returns a list of public channels based on the provided team id string.
+		[ApiRoute("/teams/{team_id}/channels", RequestType.GET)]
+		public List<Channel> GetPublicChannelsForTeam(string team_id, int page, int per_page)
+		{
+			Dictionary<string, string> options = new Dictionary<string, string>()
+			{
+				{ "page", page.ToString() },
+				{ "per_page", per_page.ToString() }
+			};
+
+			return APIGet<List<Channel>>($"/teams/{team_id}/channels", options);
+		}
+
+		// GetPublicChannelsByIdsForTeam returns a list of public channels based on provided team id string
+		[ApiRoute("/teams/{team_id}/channels/ids", RequestType.POST)]
+		public List<Channel> GetPublicChannelsForTeam(string team_id, List<string> channel_ids)
+		{
+			return APIPost<List<Channel>>($"/teams/{team_id}/channels/ids", channel_ids);
+		}
+
+		// GetChannelByName returns a channel based on the provided channel name and team id strings.
+		[ApiRoute("/teams/{team_id}/channels/name/{channel_name}", RequestType.GET)]
+		public Channel GetChannelByName(string team_id, string channel_name)
+		{
+			return APIGet<Channel>($"/teams/{team_id}/channels/name/{channel_name}");
+		}
+
+		// SearchChannels returns the channels on a team matching the provided search term.
+		[ApiRoute("/teams/{team_id}/channels/search", RequestType.POST)]
+		public List<Channel> SearchChannels(string team_id, string term)
+		{
+			var obj = new { term = term };
+			return APIPost<List<Channel>>($"/teams/{team_id}/channels/search", obj);
+		}
+
+		// GetChannelByNameForTeamName returns a channel based on the provided channel name and team name strings.
+		[ApiRoute("/teams/name/{team_name}/channels/name/{channel_name}", RequestType.GET)]
+		public Channel GetChannelByNameForTeamName(string team_name, string channel_name)
+		{
+			return APIGet<Channel>($"/teams/name/{team_name}/channels/name/{channel_name}");
+		}
+
+		// GetChannelUnread will return a ChannelUnread object that contains the number of
+		// unread messages and mentions for a user.
+		[ApiRoute("/users/{user_id}/channels/{channel_id}/unread", RequestType.GET)]
+		public ChannelUnread GetChannelUnread(string channel_id, string user_id)
+		{
+			return APIGet<ChannelUnread>($"/users/{user_id}/channels/{channel_id}/unread");
+		}
+
+		// GetChannelsForTeamForUser returns a list channels of on a team for a user.
+		[ApiRoute("/users/{user_id}/teams/{team_id}/channels", RequestType.GET)]
+		public List<Channel> GetChannelsForTeamForUser(string team_id, string user_id)
+		{
+			return APIGet<List<Channel>>($"/users/{user_id}/teams/{team_id}/channels");
+		}
+
 		// GetChannelMembersForUser gets all the channel members for a user on a team.
 		[ApiRoute("/users/{user_id}/teams/{team_id}/channels/members", RequestType.GET)]
 		public List<ChannelMember> GetChannelMembersForUser(string user_id, string team_id)
 		{
 			return APIGet<List<ChannelMember>>($"/users/{user_id}/teams/{team_id}/channels/members");
-		}
-
-		[ApiRoute("/channels/{channel_id}/members", RequestType.POST)]
-		public ChannelMember CreateChannelMember(string channel_id)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/channels/{channel_id}/members/ids", RequestType.POST)]
-		public List<ChannelMember> GetChannelMembersByIDs(string channel_id, List<string> ids)
-		{
-			throw new NotImplementedException();
-		}
-
-		[ApiRoute("/teams/{team_id}/channels/autocomplete", RequestType.GET)]
-		public List<Channel> AutoCompleteChannels(string team_id, string term)
-		{
-			throw new NotImplementedException();
-			return APIGet<List<Channel>>($"/teams/{team_id}/channels/autocomplete", new Dictionary<string, string>() { { "term", term } });
-		}
-
-		[ApiRoute("/channels/{channel_id}/members/{user_id}/view", RequestType.POST)]
-		public void ViewChannel(string channel_id, string user_id, string prev_channel_id = "")
-		{
-			throw new NotImplementedException();
-			var obj = new { channel_id = channel_id, prev_channel_id = prev_channel_id };
-			APIPost<StatusOK>($"/channels/{channel_id}/members/{user_id}/view", obj);
-		}
-
-		[ApiRoute("/channels/{channel_id}/members/{user_id}/roles", RequestType.PUT)]
-		public void UpdateChannelMemberRoles(string channel_id, string user_id, string new_roles)
-		{
-			throw new NotImplementedException();
-			var obj = new { user_id = user_id, new_roles = new_roles };
-			APIPut<StatusOK>($"/channels/{channel_id}/members/{user_id}/roles", obj);
-		}
-
-		[ApiRoute("/channels/{channel_id}/members/{user_id}", RequestType.DELETE)]
-		public void DeleteChannelMember(string channel_id, string user_id)
-		{
-			throw new NotImplementedException();
 		}
 		#endregion
 

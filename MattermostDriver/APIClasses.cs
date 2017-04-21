@@ -153,6 +153,23 @@ namespace MattermostDriver
 		public int MemberCount { get; set; }
 	}
 
+	public class ChannelUnread
+	{
+		[JsonProperty(PropertyName = "team_id")]
+		public string TeamID { get; set; }
+
+		[JsonProperty(PropertyName = "channel_id")]
+		public string ChannelID { get; set; }
+
+		[JsonProperty(PropertyName = "msg_count")]
+		public long MsgCount { get; set; }
+
+		[JsonProperty(PropertyName = "mention_count")]
+		public long MentionCount { get; set; }
+
+		//public NotificationProperties NotificationProps { get; set; }
+	}
+
 	public class ClientConfig
 	{
 		public string AboutLink;
