@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace MattermostDriver
 {
+#pragma warning disable CS1591
 	//Event Handler Delegates
 	public delegate void EventHandler();
 	public delegate void HelloEventHandler(HelloEvent e);
@@ -21,13 +22,22 @@ namespace MattermostDriver
 	public delegate void PostEditedEventHandler(PostEditedEvent e);
 	public delegate void ReactionChangedEventHandler(ReactionChangedEvent e);
 	public delegate void ChannelViewedEventHandler(ChannelViewedEvent e);
+#pragma warning restore CS1591
 
+	/// <summary>
+	/// The ApiRoute attribute containing the API route and attribute of an endpoint.
+	/// </summary>
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class ApiRoute : Attribute
 	{
 		string route;
 		RequestType requestType;
 
+		/// <summary>
+		/// Creates a new ApiRoute attribute.
+		/// </summary>
+		/// <param name="route">The API route (not including the base url).</param>
+		/// <param name="requestType">The type of HTTP request.</param>
 		public ApiRoute(string route, RequestType requestType)
 		{
 			this.route = route;
@@ -35,11 +45,26 @@ namespace MattermostDriver
 		}
 	}
 
+	/// <summary>
+	/// HTTP Request Types
+	/// </summary>
 	public enum RequestType
 	{
+		/// <summary>
+		/// The POST request type.
+		/// </summary>
 		POST,
+		/// <summary>
+		/// The GET request type.
+		/// </summary>
 		GET,
+		/// <summary>
+		/// The PUT request type.
+		/// </summary>
 		PUT,
+		/// <summary>
+		/// The DELETE request type.
+		/// </summary>
 		DELETE
 	}
 

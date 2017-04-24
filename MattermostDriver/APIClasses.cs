@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 
 namespace MattermostDriver
 {
+#pragma warning disable CS1591
 	public class Analytic
 	{
 		[JsonProperty(PropertyName = "name")]
@@ -1392,4 +1393,5 @@ namespace MattermostDriver
 		[JsonProperty(PropertyName = "turn_username", NullValueHandling = NullValueHandling.Ignore)]
 		public string TurnUsername { get; set; }
 	}
+#pragma warning restore CS1591
 }

@@ -22,24 +22,81 @@ namespace MattermostDriver
 		private string token { get; set; }
 
 		#region Events
+		/// <summary>
+		/// Invoked when the websocket has connected successfully.
+		/// </summary>
 		public event EventHandler WebsocketConnected;
+		/// <summary>
+		/// Invoked when the server sends the Hello event.
+		/// </summary>
 		public event HelloEventHandler Hello;
+		/// <summary>
+		/// Invoked when a user's status is changed.
+		/// </summary>
 		public event StatusChangeEventHandler StatusChange;
+		/// <summary>
+		/// Invoked when a user is typing.
+		/// </summary>
 		public event TypingEventHandler Typing;
+		/// <summary>
+		/// Invoked when a new message has been posted.
+		/// </summary>
 		public event PostedEventHandler Posted;
+		/// <summary>
+		/// Invoked when a user has been created.
+		/// </summary>
 		public event NewUserEventHandler NewUser;
+		/// <summary>
+		/// Invoked when a channel has been deleted.
+		/// </summary>
 		public event ChannelDeletedEventHandler ChannelDeleted;
+		/// <summary>
+		/// Invoked when a direct message channel has been created.
+		/// </summary>
 		public event DirectAddedEventHandler DirectAdded;
+		/// <summary>
+		/// Invoked when a user has been updated.
+		/// </summary>
 		public event UserUpdatedEventHandler UserUpdated;
+		/// <summary>
+		/// Invoked when a user joins a team.
+		/// </summary>
 		public event TeamChangeEventHandler UserAdded;
+		/// <summary>
+		/// Invoked when a user leaves a team.
+		/// </summary>
 		public event TeamChangeEventHandler LeaveTeam;
+		/// <summary>
+		/// Invoked when an ephemeral message has been received.
+		/// </summary>
 		public event EphemeralMessageEventHandler EphemeralMessage;
+		/// <summary>
+		/// Invoked when a preference has been changed.
+		/// </summary>
 		public event PreferenceChangedEventHandler PreferenceChanged;
+		/// <summary>
+		/// Invoked when a user is removed.
+		/// </summary>
 		public event UserRemovedEventHandler UserRemoved;
+		/// <summary>
+		/// Invoked when a post is deleted.
+		/// </summary>
 		public event PostDeletedEventHandler PostDeleted;
+		/// <summary>
+		/// Invoked when a post is edited.
+		/// </summary>
 		public event PostEditedEventHandler PostEdited;
+		/// <summary>
+		/// Invoked when a reaction is added to a post.
+		/// </summary>
 		public event ReactionChangedEventHandler ReactionAdded;
+		/// <summary>
+		/// Invoked when a reaction is removed from a post.
+		/// </summary>
 		public event ReactionChangedEventHandler ReactionRemoved;
+		/// <summary>
+		/// Invoked when a channel has been marked as viewed.
+		/// </summary>
 		public event ChannelViewedEventHandler ChannelViewed;
 		#endregion
 
@@ -868,7 +925,12 @@ namespace MattermostDriver
 		#endregion
 
 		#region Team Methods
-		// GetAllTeams returns all teams based on permissions.
+		/// <summary>
+		/// Gets a list of all of the teams.
+		/// </summary>
+		/// <param name="page">The page of results to retrieve. Starts at 0.</param>
+		/// <param name="per_page">The amount of results per page.</param>
+		/// <returns>A list of Team objects.</returns>
 		[ApiRoute("/teams", RequestType.GET)]
 		public List<Team> GetTeams(int page, int per_page)
 		{
@@ -881,35 +943,56 @@ namespace MattermostDriver
 			return APIGet<List<Team>>("/teams", options);
 		}
 
-		// CreateTeam creates a team in the system based on the provided team struct.
+		/// <summary>
+		/// Creates a team based on the given Team object.
+		/// </summary>
+		/// <param name="team">The team object to create.</param>
+		/// <returns>The newly-created Team object.</returns>
 		[ApiRoute("/teams", RequestType.POST)]
 		public Team CreateTeam(Team team)
 		{
 			return APIPost<Team>($"/teams", team);
 		}
 
-		// GetTeam returns a team based on the provided team id string.
+		/// <summary>
+		/// Gets a team based on the specified team ID.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <returns>A Team object.</returns>
 		[ApiRoute("/teams/{team_id}", RequestType.GET)]
 		public Team GetTeam(string team_id)
 		{
 			return APIGet<Team>($"/teams/{team_id}");
 		}
 
-		// UpdateTeam will update a team.
+		/// <summary>
+		/// Updates a team using the information in the specified Team object.
+		/// </summary>
+		/// <param name="team">The modified Team object.</param>
+		/// <returns>The newly-updated Team object.</returns>
 		[ApiRoute("/teams/{team_id}", RequestType.PUT)]
 		public Team UpdateTeam(Team team)
 		{
 			return APIPut<Team>($"/teams/{team.ID}", team);
 		}
 
-		// SoftDeleteTeam deletes the team softly (archive only, not permanent delete).
+		/// <summary>
+		/// Deactivates a team based on the specified team ID.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
 		[ApiRoute("/teams/{team_id}", RequestType.DELETE)]
 		public void DeleteTeam(string team_id)
 		{
 			APIDelete("/teams/{team_id}");
 		}
 
-		// GetTeamMembers returns team members based on the provided team id string.
+		/// <summary>
+		/// Gets a list of team members in the specified team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="page">The page of results to retrieve. Starts at 0.</param>
+		/// <param name="per_page">The number of results per page.</param>
+		/// <returns>A list of TeamMember objects.</returns>
 		[ApiRoute("/teams/{team_id}/members", RequestType.GET)]
 		public List<TeamMember> GetTeamMembers(string team_id, int page, int per_page)
 		{
@@ -922,7 +1005,12 @@ namespace MattermostDriver
 			return APIGet<List<TeamMember>>($"/teams/{team_id}/members", options);
 		}
 
-		// AddTeamMember adds user to a team and return a team member.
+		/// <summary>
+		/// Adds a user to a team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="user_id">The user ID.</param>
+		/// <returns>The newly-created TeamMember object.</returns>
 		[ApiRoute("/teams/{team_id}/members", RequestType.POST)]
 		public TeamMember CreateTeamMember(string team_id, string user_id)
 		{
@@ -934,7 +1022,12 @@ namespace MattermostDriver
 			return APIPost<TeamMember>($"/teams/{team_id}/members", obj);
 		}
 
-		// AddTeamMembers adds a number of users to a team and returns the team members.
+		/// <summary>
+		/// Adds multiple users to a team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="user_ids">The list of user IDs.</param>
+		/// <returns>A list of newly-created TeamMember objects.</returns>
 		[ApiRoute("/teams/{team_id}/members/batch", RequestType.POST)]
 		public List<TeamMember> CreateTeamMembers(string team_id, List<string> user_ids)
 		{
@@ -950,29 +1043,47 @@ namespace MattermostDriver
 			return APIPost<List<TeamMember>>($"/teams/{team_id}/members/batch", obj);
 		}
 
-		// GetTeamMembersByIds will return an array of team members based on the
-		// team id and a list of user ids provided. Must be authenticated.
+		/// <summary>
+		/// Gets a list of team members in the specified team based on the specified user IDs.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="ids">The list of user IDs.</param>
+		/// <returns>A list of TeamMember objects.</returns>
 		[ApiRoute("/teams/{team_id}/members/ids", RequestType.POST)]
 		public List<TeamMember> GetTeamMembersByIDs(string team_id, List<string> ids)
 		{
 			return APIPost<List<TeamMember>>($"/teams/{team_id}/members/ids", ids);
 		}
 
-		// GetTeamMember returns a team member based on the provided team and user id strings.
+		/// <summary>
+		/// Gets a team member based on the specified user ID and team ID.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="user_id">The user ID.</param>
+		/// <returns>The TeamMember object.</returns>
 		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.GET)]
 		public TeamMember GetTeamMember(string team_id, string user_id)
 		{
 			return APIGet<TeamMember>($"/teams/{team_id}/members/{user_id}");
 		}
 
-		// RemoveTeamMember will remove a user from a team.
+		/// <summary>
+		/// Removes a user from the specified team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="user_id">The user ID.</param>
 		[ApiRoute("/teams/{team_id}/members/{user_id}", RequestType.DELETE)]
 		public void DeleteTeamMember(string team_id, string user_id)
 		{
 			APIDelete($"/teams/{team_id}/members/{user_id}");
 		}
 
-		// UpdateTeamMemberRoles will update the roles on a team for a user.
+		/// <summary>
+		/// Updates the roles for a user on the specified team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="roles">The roles to give to the user. Available roles are "team_user" and "team_admin".</param>
 		[ApiRoute("/teams/{team_id}/members/{user_id}/roles", RequestType.PUT)]
 		public void UpdateTeamMemberRoles(string team_id, string user_id, string roles)
 		{
@@ -980,16 +1091,28 @@ namespace MattermostDriver
 			APIPut<StatusOK>($"/teams/{team_id}/members/{user_id}/roles", obj);
 		}
 
-		// PatchTeam partially updates a team. Any missing fields are not updated.
+		/// <summary>
+		/// Updates a team based on the specified fields.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <param name="display_name">(Optional) The team's display name.</param>
+		/// <param name="description">(Optional) The team's description.</param>
+		/// <param name="company_name">(Optional) The team's company name.</param>
+		/// <param name="invite_id">(Optional) The team's invite ID.</param>
+		/// <param name="allow_open_invite">(Defaults to false) If true, the team allows open invites.</param>
+		/// <returns>The newly-updated Team object.</returns>
 		[ApiRoute("/teams/{team_id}/patch", RequestType.PUT)]
-		public Team UpdateTeam(string team_id, string display_name = "", string description = "", string company_name = "", string invite_id = "", string allow_open_invite = "")
+		public Team UpdateTeam(string team_id, string display_name = "", string description = "", string company_name = "", string invite_id = "", bool allow_open_invite = false)
 		{
 			var obj = new { display_name = display_name, description = description, company_name = company_name, invite_id = invite_id, allow_open_invite = allow_open_invite };
 			return APIPut<Team>($"/teams/{team_id}/patch", obj);
 		}
 
-		// GetTeamStats returns a team stats based on the team id string.
-		// Must be authenticated.
+		/// <summary>
+		/// Returns team statistics for the specified team.
+		/// </summary>
+		/// <param name="team_id">The team ID.</param>
+		/// <returns>A TeamStats object for the specified team.</returns>
 		[ApiRoute("/teams/{team_id}/stats", RequestType.GET)]
 		public TeamStats GetTeamStats(string team_id)
 		{
@@ -997,6 +1120,11 @@ namespace MattermostDriver
 		}
 
 		// GetTeamByName returns a team based on the provided team name string.
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		[ApiRoute("/teams/name/{name}", RequestType.GET)]
 		public Team GetTeamByName(string name)
 		{
