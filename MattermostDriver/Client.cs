@@ -494,8 +494,8 @@ namespace MattermostDriver
 		/// Gets a list of audit logs for the specified user.
 		/// </summary>
 		/// <param name="user_id">The user ID.</param>
-		/// <param name="page">The page of results to retrieve.</param>
-		/// <param name="per_page">The number of entries per page to retrieve.</param>
+		/// <param name="page">The page of results to retrieve. Starts at 0.</param>
+		/// <param name="per_page">The number of results per page.</param>
 		/// <returns>A list of Audit objects.</returns>
 		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
 		public List<Audit> GetAudits(string user_id, int page, int per_page)
@@ -533,7 +533,18 @@ namespace MattermostDriver
 			return APIPost<GetMFA>($"/users/{user_id}/mfa/generate", null).secret;
 		}
 
-		// PatchUser partially updates a user in the system. Any missing fields are not updated.
+		/// <summary>
+		/// Partially updates a user based on provided information.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="username">(Optional) The user's new username.</param>
+		/// <param name="nickname">(Optional) The user's new nickname.</param>
+		/// <param name="first_name">(Optional) The user's new first name.</param>
+		/// <param name="last_name">(Optional) The user's new last name.</param>
+		/// <param name="position">(Optional) The user's new position.</param>
+		/// <param name="email">(Optional) The user's new email.</param>
+		/// <param name="locale">(Optional) The user's new locale.</param>
+		/// <returns>The updated User object.</returns>
 		[ApiRoute("/users/{user_id}/patch", RequestType.PUT)]
 		public User UpdateUser(string user_id, string username = "", string nickname = "", string first_name = "", string last_name = "", string position = "", string email = "", string locale = "")
 		{
@@ -541,7 +552,12 @@ namespace MattermostDriver
 			return APIPut<User>($"/users/{user_id}/patch", obj);
 		}
 
-		// UpdateUserPassword updates a user's password. Must be logged in as the user or be a system administrator.
+		/// <summary>
+		/// Updates the specified user's password. Requires current password if changing the current user's password, or requires system admin role if changing someone else's password.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="new_password">The new password.</param>
+		/// <param name="current_password">(Optional) The current password, required only if changing current user's password.</param>
 		[ApiRoute("/users/{user_id}/password", RequestType.PUT)]
 		public void UpdatePassword(string user_id, string new_password, string current_password = "")
 		{
@@ -549,7 +565,12 @@ namespace MattermostDriver
 			APIPut<StatusOK>($"/users/{user_id}/password", obj);
 		}
 
-		// ResetPassword uses a recovery code to update reset a user's password.
+		/// <summary>
+		/// Resets the specified user's password, authenticated with a recovery code.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="new_password">The new password.</param>
+		/// <param name="code">The recovery code.</param>
 		[ApiRoute("/users/{user_id}/password/reset", RequestType.POST)]
 		public void ResetMyPassword(string user_id, string new_password, string code)
 		{
@@ -557,8 +578,11 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/{user_id}/password/reset", obj);
 		}
 
-		// SendPasswordResetEmail will send a link for password resetting to a user with the
-		// provided email.
+		/// <summary>
+		/// Requests the server to send out a password-reset email to the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="email">The user's email.</param>
 		[ApiRoute("/users/{user_id}/password/reset/send", RequestType.POST)]
 		public void SendResetPassword(string user_id, string email)
 		{
@@ -566,7 +590,11 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/{user_id}/password/reset/send", obj);
 		}
 
-		// UpdateUserRoles updates a user's roles in the system. A user can have "system_user" and "system_admin" roles.
+		/// <summary>
+		/// Updates the specified user's roles.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="roles">The user's roles. Can include "system_user" and "system_admin".</param>
 		[ApiRoute("/users/{user_id}/roles", RequestType.PUT)]
 		public void UpdateUserRoles(string user_id, string roles)
 		{
@@ -574,7 +602,11 @@ namespace MattermostDriver
 			APIPut<StatusOK>($"/users/{user_id}/roles", obj);
 		}
 
-		// GetSessions returns a list of sessions based on the provided user id string.
+		/// <summary>
+		/// Gets a list of sessions for the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <returns>A list of session objects.</returns>
 		[ApiRoute("/users/{user_id}/sessions", RequestType.GET)]
 		public List<Session> GetSessions(string user_id)
 		{
@@ -582,6 +614,11 @@ namespace MattermostDriver
 		}
 
 		// RevokeSession revokes a user session based on the provided user id and session id strings.
+		/// <summary>
+		/// Revokes a session for the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="session_id">The session ID to revoke.</param>
 		[ApiRoute("/users/{user_id}/sessions/revoke", RequestType.POST)]
 		public void RevokeSessions(string user_id, string session_id)
 		{
@@ -589,8 +626,17 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/{user_id}/sessions/revoke", obj);
 		}
 
-		// CreateUser creates a user in the system based on the provided user struct.
-		//TODO: add hash/inviteID options?
+		/// <summary>
+		/// Creates a new user based on the given information.
+		/// </summary>
+		/// <param name="email">The user's email.</param>
+		/// <param name="username">The user's username.</param>
+		/// <param name="password">The user's password.</param>
+		/// <param name="first_name">(Optional) The user's first name.</param>
+		/// <param name="last_name">(Optional) The user's last name.</param>
+		/// <param name="nickname">(Optional) The user's nickname.</param>
+		/// <param name="locale">(Optional) The user's locale.</param>
+		/// <returns>The newly-created User object.</returns>
 		[ApiRoute("/users", RequestType.POST)]
 		public User CreateUser(string email, string username, string password, string first_name = "", string last_name = "", string nickname = "", string locale = "")
 		{
@@ -598,7 +644,15 @@ namespace MattermostDriver
 			return APIPost<User>($"/users", obj);
 		}
 
-		// GetUsers returns a page of users on the system. Page counting starts at 0.
+		/// <summary>
+		/// Gets a list of users based on the provided criteria.
+		/// </summary>
+		/// <param name="page">The page of results to retrieve. Starts at 0.</param>
+		/// <param name="per_page">The number of results per page.</param>
+		/// <param name="in_team">(Optional) Restricts search to a specific team. Cannot be used with other restrictions.</param>
+		/// <param name="in_channel">(Optional) Restricts search to a specific channel. Cannot be used with other restrictions.</param>
+		/// <param name="not_in_channel">(Optional) Restricts search to users not in a specific channel. Cannot be used with other restrictions.</param>
+		/// <returns>A list of User objects.</returns>
 		[ApiRoute("/users", RequestType.GET)]
 		public List<User> GetUsers(int page, int per_page, string in_team = "", string in_channel = "", string not_in_channel = "")
 		{
@@ -617,10 +671,15 @@ namespace MattermostDriver
 
 			return APIGet<List<User>>("/users", options);
 		}
-
-		// AutocompleteUsers returns the users in the system, team, or channel based on search term.
+		/// <summary>
+		/// Returns a list of users based on the provided criteria.
+		/// </summary>
+		/// <param name="username">The search term (username).</param>
+		/// <param name="in_channel">(Optional) Restricts search to a specific channel.</param>
+		/// <param name="in_team">(Optional) Restricts search to a specific team.</param>
+		/// <returns>A list of User objects.</returns>
 		[ApiRoute("/users/autocomplete", RequestType.GET)]
-		public UserAutoComplete AutoCompleteUsers(string username, string in_channel = "", string in_team = "")
+		public List<User> AutoCompleteUsers(string username, string in_channel = "", string in_team = "")
 		{
 			Dictionary<string, string> options = new Dictionary<string, string>
 			{
@@ -631,17 +690,25 @@ namespace MattermostDriver
 			if (!string.IsNullOrWhiteSpace(in_team))
 				options.Add("in_team", in_team);
 
-			return APIGet<UserAutoComplete>($"/users/autocomplete", options);
+			return APIGet<UserAutoComplete>($"/users/autocomplete", options).users;
 		}
 
-		// GetUserByEmail returns a user based on the provided user email string.
+		/// <summary>
+		/// Gets a user based on the specified email.
+		/// </summary>
+		/// <param name="email">The email address.</param>
+		/// <returns>A User object.</returns>
 		[ApiRoute("/users/email/{email}", RequestType.GET)]
 		public User GetUserByEmail(string email)
 		{
 			return APIGet<User>($"/users/email/{email}");
 		}
 
-		// VerifyUserEmail will verify a user's email using user id and hash strings.
+		/// <summary>
+		/// Verifies the specified user's email address using a hash ID.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="hash_id">The hash ID.</param>
 		[ApiRoute("/users/email/verify", RequestType.POST)]
 		public void VerifyUserEmail(string user_id, string hash_id)
 		{
@@ -649,9 +716,10 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/email/verify", obj);
 		}
 
-		// SendVerificationEmail will send an email to the user with the provided email address, if
-		// that user exists. The email will contain a link that can be used to verify the user's
-		// email address.
+		/// <summary>
+		/// Attempts to send an email to the specified email address (if a user exists with that email address) containing a link to verify the email address.
+		/// </summary>
+		/// <param name="email">The email address.</param>
 		[ApiRoute("/users/email/verify/send", RequestType.POST)]
 		public void SendVerificationEmail(string email)
 		{
@@ -659,31 +727,50 @@ namespace MattermostDriver
 			APIPost<StatusOK>($"/users/email/verify/send", obj);
 		}
 
-		// GetUsersByIds returns a list of users based on the provided user ids.
+		/// <summary>
+		/// Gets a list of users based on the provided user IDs.
+		/// </summary>
+		/// <param name="ids">The list of user IDs to retrieve.</param>
+		/// <returns>A list of User objects.</returns>
 		[ApiRoute("/users/ids", RequestType.POST)]
 		public List<User> GetUsersByIDs(List<string> ids)
 		{
 			return APIPost<List<User>>($"/users/ids", ids);
 		}
 
-		// Login authenticates a user by login id, which can be username, email or some sort
-		// of SSO identifier based on server configuration, and a password.
+		/// <summary>
+		/// Authenticates a user using a login ID and a password.
+		/// </summary>
+		/// <param name="login_id">The login ID, which can be a username, email, or SSO identifier.</param>
+		/// <param name="password">The user's password.</param>
+		/// <param name="device_id">(Optional) Attaches a device ID to this session.</param>
+		/// <returns>A Self object of the newly-authenticated user.</returns>
 		[ApiRoute("/users/login", RequestType.POST)]
-		public Self Login(string login_id, string password)
+		public Self Login(string login_id, string password, string device_id = "")
 		{
-			var obj = new { login_id = login_id, password = password };
+			var obj = new { login_id = login_id, password = password, device_id = device_id };
 			return APIPostGetAuth(obj);
 		}
 
-		// LoginById authenticates a user by user id and password.
+		/// <summary>
+		/// Authenticates a user using a user ID and a password.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="password">The user's password.</param>
+		/// <returns>A Self object of the newly-authenticated user.</returns>
 		[ApiRoute("/users/login", RequestType.POST)]
-		public Self LoginByID(string id, string password)
+		public Self LoginByID(string user_id, string password)
 		{
-			var obj = new { id = id, password = password };
+			var obj = new { id = user_id, password = password };
 			return APIPostGetAuth(obj);
 		}
 
-		// LoginByLdap authenticates a user by LDAP id and password.
+		/// <summary>
+		/// Authenticates a user using LDAP ID and a password.
+		/// </summary>
+		/// <param name="login_id">The LDAP ID.</param>
+		/// <param name="password">The user's password.</param>
+		/// <returns>Self object of the newly-authenticated user.</returns>
 		[ApiRoute("/users/login", RequestType.POST)]
 		public Self LoginByLdap(string login_id, string password)
 		{
@@ -691,25 +778,30 @@ namespace MattermostDriver
 			return APIPostGetAuth(obj);
 		}
 
-		// LoginWithDevice authenticates a user by login id (username, email or some sort
-		// of SSO identifier based on configuration), password and attaches a device id to
-		// the session.
-		[ApiRoute("/users/login", RequestType.POST)]
-		public Self LoginWithDevice(string login_id, string password, string device_id = "")
-		{
-			var obj = new { login_id = login_id, password = password, device_id = device_id };
-			return APIPostGetAuth(obj);
-		}
-
-		// Logout terminates the current user's session.
+		/// <summary>
+		/// Terminates the current user's session (and disconnects the websocket session if open).
+		/// </summary>
 		[ApiRoute("/users/logout", RequestType.POST)]
 		public void Logout()
 		{
+			if (socket.State == WebSocketState.Open)
+				socket.Close("User logged out.");
+
 			token = "";
 			APIPost<StatusOK>($"/users/logout", null);
 		}
 
-		// SwitchAccountType changes a user's login type from one type to another.
+		/// <summary>
+		/// Switches current user's login type.
+		/// </summary>
+		/// <param name="current_service">The current login type. Valid types: email, saml, gitlab, google, office365</param>
+		/// <param name="new_service">The new login type.</param>
+		/// <param name="email">The user's email.</param>
+		/// <param name="current_password">(Optional) The current password. Required when switching from email to oauth, email to ldap, or ldap to email.</param>
+		/// <param name="new_password">(Optional) The new password. Required when switching from oauth to email or ldap to email.</param>
+		/// <param name="mfa_code">(Optional) The multi-factor authentication code. If applicable, required when switching from email to oauth, email to ldap, or ldap to email.</param>
+		/// <param name="ldap_id">(Optional) The LDAP ID. Required when switching from email to ldap.</param>
+		/// <returns>A link that finishes the process when oauth or saml is used.</returns>
 		[ApiRoute("/users/login/switch", RequestType.POST)]
 		public string SwitchAccountType(string current_service, string new_service, string email, string current_password = "", string new_password = "", string mfa_code = "", string ldap_id = "")
 		{
@@ -717,8 +809,11 @@ namespace MattermostDriver
 			return APIPost<FollowLink>("/users/login/switch", obj).follow_link;
 		}
 
-		// CheckUserMfa checks whether a user has MFA active on their account or not based on the
-		// provided login id.
+		/// <summary>
+		/// Checks if multi-factor authentication is enabled for the account specified by the login ID.
+		/// </summary>
+		/// <param name="login_id">The login ID.</param>
+		/// <returns>If true, the account has MFA enabled.</returns>
 		[ApiRoute("/users/mfa", RequestType.POST)]
 		public bool CheckUserMfa(string login_id)
 		{
@@ -727,15 +822,28 @@ namespace MattermostDriver
 			return resp.mfa_required == "true";
 		}
 
-		// SearchUsers returns a list of users based on some search criteria.
+		/// <summary>
+		/// Searches users matching the specified criteria.
+		/// </summary>
+		/// <param name="term">The term to search for.</param>
+		/// <param name="team_id">(Optional) Restricts search to users in the specified team.</param>
+		/// <param name="not_in_team_id">(Optional) Restricts search to users not in the specified team.</param>
+		/// <param name="in_channel_id">(Optional) Restricts search to users in a specified channel.</param>
+		/// <param name="not_in_channel_id">(Optional) Restricts search to users not in a specified channel. Requires team_id.</param>
+		/// <param name="allow_inactive">(Defaults to false) If true, deactivated users will be included in the search.</param>
+		/// <param name="without_team">(Defaults to false) If true, only users not on a team will be included in the search. Ignores team_id, in_channel_id, and not_in_channel_id restrictions.</param>
+		/// <returns>A list of User objects.</returns>
 		[ApiRoute("/users/search", RequestType.POST)]
-		public List<User> SearchUsers(string term, string team_id, string not_in_team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false, bool without_team = false)
+		public List<User> SearchUsers(string term, string team_id = "", string not_in_team_id = "", string in_channel_id = "", string not_in_channel_id = "", bool allow_inactive = false, bool without_team = false)
 		{
 			var obj = new { term = term, team_id = team_id, not_in_team_id = not_in_team_id, in_channel_id = in_channel_id, not_in_channel_id = not_in_channel_id, allow_inactive = allow_inactive, without_team = without_team };
 			return APIPost<List<User>>($"/users/search", obj);
 		}
 
-		// AttachDeviceId attaches a mobile device ID to the current session.
+		/// <summary>
+		/// Attaches a mobile device ID to the current session.
+		/// </summary>
+		/// <param name="device_id">The device ID.</param>
 		[ApiRoute("/users/sessions/device", RequestType.PUT)]
 		public void AttachDeviceId(string device_id)
 		{
@@ -743,7 +851,11 @@ namespace MattermostDriver
 			APIPut<StatusOK>("/users/sessions/device", obj);
 		}
 
-		// GetUserByUsername returns a user based on the provided user name string.
+		/// <summary>
+		/// Gets a user based on the specified username.
+		/// </summary>
+		/// <param name="username">The user's username.</param>
+		/// <returns>A User object.</returns>
 		[ApiRoute("/users/username/{username}", RequestType.GET)]
 		public User GetUserByUsername(string username)
 		{

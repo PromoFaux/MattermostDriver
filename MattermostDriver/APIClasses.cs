@@ -1377,12 +1377,6 @@ namespace MattermostDriver
 		public string Locale { get; set; }
 	}
 
-	public class UserAutoComplete
-	{
-		[JsonProperty(PropertyName = "users")]
-		public List<User> Users { get; set; }
-	}
-
 	public class WebrtcInfoResponse
 	{
 		[JsonProperty(PropertyName = "token")]

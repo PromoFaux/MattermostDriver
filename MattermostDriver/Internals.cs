@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MattermostDriver
 {
@@ -128,5 +129,10 @@ namespace MattermostDriver
 	{
 		public string level;
 		public string message;
+	}
+
+	internal class UserAutoComplete
+	{
+		public List<User> users { get; set; }
 	}
 }
