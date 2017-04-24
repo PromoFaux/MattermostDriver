@@ -7,6 +7,9 @@ using WebSocket4Net;
 
 namespace MattermostDriver
 {
+	/// <summary>
+	/// The client used to consume the Mattermost API.
+	/// </summary>
 	public class Client
 	{
 		private ILogger logger { get; set; }
@@ -40,6 +43,12 @@ namespace MattermostDriver
 		public event ChannelViewedEventHandler ChannelViewed;
 		#endregion
 
+		/// <summary>
+		/// Creates a new instance of the Mattermost Driver Client.
+		/// </summary>
+		/// <param name="url">The base url of the Mattermost server.</param>
+		/// <param name="port">The port of the Mattermost server.</param>
+		/// <param name="logger">A custom ILogger instance for logging output.</param>
 		public Client(string url, string port, ILogger logger)
 		{
 			//Setup logging
@@ -248,6 +257,9 @@ namespace MattermostDriver
 		}
 		#endregion
 
+		/// <summary>
+		/// Connects to the server via websocket.
+		/// </summary>
 		public void Connect()
 		{
 			if (socket.State == WebSocketState.Open)
@@ -414,8 +426,18 @@ namespace MattermostDriver
 			logger.Warn("Websocket closed.");
 		}
 
+		/// <summary>
+		/// Sends a UserTyping websocket event to the server.
+		/// </summary>
+		/// <param name="channel_id">The channel ID.</param>
+		/// <param name="parent_id"></param>
 		public void SendUserTyping(string channel_id, string parent_id = "")
 		{
+			if (socket.State != WebSocketState.Open)
+			{
+				logger.Error("Cannot send websocket UserTyping event without connecting to websocket.");
+				return;
+			}
 			var request = new { seq = ++seq, action = "user_typing", data = new { channel_id = channel_id, parent_id = parent_id } };
 			awaiting_ok = true;
 			socket.Send(JsonConvert.SerializeObject(request));
@@ -423,28 +445,43 @@ namespace MattermostDriver
 		#endregion
 
 		#region User Methods
-		// DeleteUser deactivates a user in the system based on the provided user id string.
+		/// <summary>
+		/// Deactivates a user account.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
 		[ApiRoute("/users/{user_id}", RequestType.DELETE)]
 		public void DeleteUser(string user_id)
 		{
 			APIDelete($"/users/{user_id}");
 		}
 
-		// GetUser returns a user based on the provided user id string.
+		/// <summary>
+		/// Gets a user object based on the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <returns>The User object requested.</returns>
 		[ApiRoute("/users/{user_id}", RequestType.GET)]
 		public User GetUser(string user_id)
 		{
 			return APIGet<User>($"/users/{user_id}");
 		}
 
-		// UpdateUser updates a user in the system based on the provided user struct.
+		/// <summary>
+		/// Updates a user based on the provided user object.
+		/// </summary>
+		/// <param name="user">The updated User object.</param>
+		/// <returns>The updated User object.</returns>
 		[ApiRoute("/users/{user_id}", RequestType.PUT)]
 		public User UpdateUser(User user)
 		{
 			return APIPut<User>($"/users/{user.ID}", user);
 		}
-
-		// UpdateUserActive updates status of a user whether active or not.
+		
+		/// <summary>
+		/// Updates the 'active' status of the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="active">If true, the user is active.</param>
 		[ApiRoute("/users/{user_id}/active", RequestType.PUT)]
 		public void UpdateUserActive(string user_id, bool active)
 		{
@@ -453,6 +490,13 @@ namespace MattermostDriver
 		}
 
 		// GetUserAudits returns a list of audit based on the provided user id string.
+		/// <summary>
+		/// Gets a list of audit logs for the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="page">The page of results to retrieve.</param>
+		/// <param name="per_page">The number of entries per page to retrieve.</param>
+		/// <returns>A list of Audit objects.</returns>
 		[ApiRoute("/users/{user_id}/audits", RequestType.GET)]
 		public List<Audit> GetAudits(string user_id, int page, int per_page)
 		{
@@ -464,9 +508,12 @@ namespace MattermostDriver
 			return APIGet<List<Audit>>($"/users/{user_id}/audits", options);
 		}
 
-		// UpdateUserMfa activates multi-factor authentication for a user if activate
-		// is true and a valid code is provided. If activate is false, then code is not
-		// required and multi-factor authentication is disabled for the user.
+		/// <summary>
+		/// Activates or deactivates multi-factor authentication for the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <param name="activate">If true, MFA will be activated and a code is required. If false, MFA will be deactivated and a code is not required.</param>
+		/// <param name="code">(Optional) If activating MFA, a valid code is required.</param>
 		[ApiRoute("/users/{user_id}/mfa", RequestType.PUT)]
 		public void UpdateUserMFA(string user_id, bool activate, string code = "")
 		{
@@ -475,6 +522,11 @@ namespace MattermostDriver
 		}
 
 		// GenerateMfaSecret will generate a new MFA secret for a user and return it as a string.
+		/// <summary>
+		/// Generates a new multi-factor authentication secret for the specified user.
+		/// </summary>
+		/// <param name="user_id">The user ID.</param>
+		/// <returns>The newly-generated MFA secret.</returns>
 		[ApiRoute("/users/{user_id}/mfa/generate", RequestType.POST)]
 		public string GenerateMFA(string user_id)
 		{
